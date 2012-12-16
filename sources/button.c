@@ -17,8 +17,9 @@ int initButton(Button *button, Texture *tex)
     button->weight = 0;
     button->height = 0;
     button->selected = 0;
+    button->textInput = 0;
     button->text.nbChar = 0;
-    button->text.string = NULL;
+    button->text.string[0] = 0;
     button->text.shadow = 1;
     button->textureUnselected[0].x = 0;
     button->textureUnselected[0].y = 132;
@@ -40,7 +41,7 @@ int initButton(Button *button, Texture *tex)
     return 1;
 }
 
-int renderButton(Button *button, Texture *textureText, int *weightLetter)
+int renderButton(Button *button, Texture *textureText, int *weightLetter, Text *buff)
 {
     Point2D position[4];
     Point2D posText;
@@ -54,53 +55,91 @@ int renderButton(Button *button, Texture *textureText, int *weightLetter)
     position[3].x = button->pos.x;
     position[3].y = WINDOW_HEIGHT -(button->pos.y + button->height);
 
-    glColor3ub(255, 255, 255);
-
-    glBindTexture(GL_TEXTURE_2D, button->IDtex);
-
-    if(button->selected == 1)
+    if(button->textInput == 0)
     {
+        glColor3ub(255, 255, 255);
+
+        glEnable(GL_TEXTURE_2D);
+
+        glBindTexture(GL_TEXTURE_2D, button->IDtex);
+
+        if(button->selected == 1)
+        {
+            glBegin(GL_QUADS);
+
+            glTexCoord2d(button->textureSelected[0].x, button->textureSelected[0].y);
+            glVertex2i((int)position[0].x, (int)position[0].y);
+            glTexCoord2d(button->textureSelected[1].x, button->textureSelected[0].y);
+            glVertex2i((int)position[1].x, (int)position[1].y);
+            glTexCoord2d(button->textureSelected[1].x, button->textureSelected[1].y);
+            glVertex2i((int)position[2].x, (int)position[2].y);
+            glTexCoord2d(button->textureSelected[0].x, button->textureSelected[1].y);
+            glVertex2i((int)position[3].x, (int)position[3].y);
+
+            glEnd();
+        }
+        else
+        {
+            glBegin(GL_QUADS);
+
+            glTexCoord2d(button->textureUnselected[0].x, button->textureUnselected[0].y);
+            glVertex2i((int)position[0].x, (int)position[0].y);
+            glTexCoord2d(button->textureUnselected[1].x, button->textureUnselected[0].y);
+            glVertex2i((int)position[1].x, (int)position[1].y);
+            glTexCoord2d(button->textureUnselected[1].x, button->textureUnselected[1].y);
+            glVertex2i((int)position[2].x, (int)position[2].y);
+            glTexCoord2d(button->textureUnselected[0].x, button->textureUnselected[1].y);
+            glVertex2i((int)position[3].x, (int)position[3].y);
+
+            glEnd();
+        }
+
+        if(button->text.string != NULL)
+        {
+            glTranslated(0, 0, 1);
+            posText.x = (int)button->pos.x + button->weight / 2 - getWeightString(button->text, weightLetter) / 2;
+            posText.y = (int)button->pos.y + button->height / 2 - 8;
+
+            glPushMatrix();
+            writeText(textureText, button->text, weightLetter, (int)posText.x, (int)posText.y);
+            glPopMatrix();
+        }
+
+        glBindTexture(GL_TEXTURE_2D, 0);
+    }
+
+    glDisable(GL_TEXTURE_2D);
+
+    if(button->textInput == 1)
+    {
+        glPushMatrix();
+
         glBegin(GL_QUADS);
 
-        glTexCoord2d(button->textureSelected[0].x, button->textureSelected[0].y);
+        glColor3ub(10, 10, 10);
         glVertex2i((int)position[0].x, (int)position[0].y);
-        glTexCoord2d(button->textureSelected[1].x, button->textureSelected[0].y);
         glVertex2i((int)position[1].x, (int)position[1].y);
-        glTexCoord2d(button->textureSelected[1].x, button->textureSelected[1].y);
         glVertex2i((int)position[2].x, (int)position[2].y);
-        glTexCoord2d(button->textureSelected[0].x, button->textureSelected[1].y);
         glVertex2i((int)position[3].x, (int)position[3].y);
 
-        glEnd();
-    }
-    else
-    {
-        glBegin(GL_QUADS);
+        glTranslated(0, 0, 1);
 
-        glTexCoord2d(button->textureUnselected[0].x, button->textureUnselected[0].y);
-        glVertex2i((int)position[0].x, (int)position[0].y);
-        glTexCoord2d(button->textureUnselected[1].x, button->textureUnselected[0].y);
-        glVertex2i((int)position[1].x, (int)position[1].y);
-        glTexCoord2d(button->textureUnselected[1].x, button->textureUnselected[1].y);
-        glVertex2i((int)position[2].x, (int)position[2].y);
-        glTexCoord2d(button->textureUnselected[0].x, button->textureUnselected[1].y);
-        glVertex2i((int)position[3].x, (int)position[3].y);
+        glColor3ub(255, 255, 255);
+        glVertex2i((int)position[0].x - 2, (int)position[0].y + 2);
+        glVertex2i((int)position[1].x + 2, (int)position[1].y + 2);
+        glVertex2i((int)position[2].x + 2, (int)position[2].y - 2);
+        glVertex2i((int)position[3].x - 2, (int)position[3].y - 2);
 
         glEnd();
-    }
 
-    if(button->text.string != NULL)
-    {
-        glTranslated(0, 0, 2);
-        posText.x = (int)button->pos.x + button->weight / 2 - getWeightString(button->text, weightLetter) / 2;
+        glTranslated(0, 0, 1);
+        posText.x = (int)button->pos.x + button->weight / 2 - getWeightString((*buff), weightLetter) / 2;
         posText.y = (int)button->pos.y + button->height / 2 - 8;
 
-        glPushMatrix();
-        writeText(textureText, button->text, weightLetter, (int)posText.x, (int)posText.y);
+        writeText(textureText, (*buff), weightLetter, (int)posText.x, (int)posText.y);
+
         glPopMatrix();
     }
-
-    glBindTexture(GL_TEXTURE_2D, 0);
 
     return 1;
 }
@@ -122,7 +161,7 @@ void attribButtons(Button *button, Texture *texButton)
 {
     int i;
 
-    for(i = 0; i < NUMBER_BUTTON_EDITOR; i++)
+    for(i = 0; i < NUMBER_BUTTONS_EDITOR; i++)
     {
         initButton(&button[i], texButton);
     }

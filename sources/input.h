@@ -4,6 +4,7 @@
     typedef struct
     {
         char keydown[SDLK_LAST];
+        char keydownUnicode[SDLK_LAST];
         int posX,posY;
         int xrel,yrel;
         char mouse[8];

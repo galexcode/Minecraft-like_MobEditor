@@ -20,9 +20,11 @@ void updateEvents(Input* in)
     {
         case SDL_KEYDOWN:
             in->keydown[event.key.keysym.sym] = 1;
+            in->keydownUnicode[event.key.keysym.unicode] = 1;
             break;
         case SDL_KEYUP:
             in->keydown[event.key.keysym.sym] = 0;
+            in->keydownUnicode[event.key.keysym.unicode] = 1;
             break;
         case SDL_MOUSEMOTION:
             in->posX = event.motion.x;
@@ -68,5 +70,6 @@ void initialiserInput(Input *in)
     for(i = 0; i < SDLK_LAST; i++)
     {
         in->keydown[i] = 0;
+        in->keydownUnicode[i] = 0;
     }
 }

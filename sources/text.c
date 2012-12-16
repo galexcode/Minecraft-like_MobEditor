@@ -1,6 +1,9 @@
 #include "constants.h"
 #include "text.h"
 #include "render.h"
+#include "input.h"
+
+extern Input event;
 
 void loadWeightLetters(char *path, int *weightLetter)
 {
@@ -55,6 +58,8 @@ void writeText(Texture *texture, Text text, int *weightLetter, int x, int y)
 
     texture->weight = 0;
     texture->height = 16;
+
+    glEnable(GL_TEXTURE_2D);
 
     glPushMatrix();
 
@@ -141,68 +146,46 @@ int getWeightString(Text text, int *weightLetter)
 
 int addStringToText(Text *text, char *string)
 {
-    if(text->string != NULL)
-    {
-        free(text->string);
-    }
-
     text->nbChar = strlen(string);
-    text->string = malloc((text->nbChar + 1) * sizeof(char));
-
-    if(text->string == NULL)
-    {
-        printf("Impossible to allocate memory for string");
-        return 0;
-    }
 
     sprintf(text->string, "%s", string);
     return 1;
 }
 
-int addCharToString(Text *text, int cursor)
+int addCharToString(Text *text, int c)
 {
-    char *tmp;
+    if(c >= 33 && c <= 126 && text->nbChar < SIZE_PATH_MAX)
+    {
+        text->nbChar++;
+        text->string[text->nbChar - 1] = c;
+        text->string[text->nbChar] = 0;
 
-    tmp = malloc(text->nbChar * sizeof(char));
+        return 1;
+    }
+    if(c == 8 && text->nbChar > 0)
+    {
+        text->nbChar--;
+        text->string[text->nbChar] = 0;
 
-    return 1;
+        return 1;
+    }
+
+    return 0;
 }
 
-int getText()
+char getCharFromKeyboard()
 {
-    /*int cursor = 0;
-    int tpsActuel = 0, tpsPrecedent = 0;
-    char c = 0;
+    char c = -1;
+    int i;
 
-    while(event.touche[SDLK_RETURN] == 0 && event.touche[SDLK_KP_ENTER] == 0)
+    for(i = 0; i < SDLK_LAST; i++)
     {
-        updateEvents(&event);
-
-        tpsActuel = SDL_GetTicks();
-
-        if(tpsActuel > tpsPrecedent + 20)
+        if(event.keydownUnicode[i] == 1)
         {
-            c = interpreterEvent();
-
-            if(c != 0)
-            {
-                texte[curseur] = c;
-                curseur++;
-                c = 0;
-            }
-
-            if(event.touche[SDLK_BACKSPACE] == 1)
-            {
-                if(curseur > 0)
-                {
-                    curseur--;
-                    texte[curseur] = 0;
-                }
-                event.touche[SDLK_BACKSPACE] = 0;
-            }
-            tpsPrecedent = tpsActuel;
+            event.keydownUnicode[i] = 0;
+            c = i;
         }
-        printf("Actuel (%d) : %s_\n", tpsActuel, texte);
-    }*/
-    return 1;
+    }
+
+    return c;
 }

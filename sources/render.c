@@ -12,20 +12,31 @@ void drawCube(Cube *cube)
 
     for(i = 0; i < 6; i++)
     {
-        drawFace(&cube->face[i]);
+        drawFace(&cube->face[i], RENDER_MODE);
     }
 }
 
-void drawFace(Face *face)
+void drawFace(Face *face, int mode)
 {
     int i;
+
+    if(face->point[0].coordFileTexture.x != (double)-1 && mode == RENDER_MODE)
+    {
+        glEnable(GL_TEXTURE_2D);
+    }
 
     glBegin(GL_QUADS);
     for(i = 0; i < 4; i++)
     {
+        if(face->point[i].coordFileTexture.x != (double)-1 && mode == RENDER_MODE)
+        {
+            glTexCoord2d(face->point[i].coordFileTexture.x, face->point[i].coordFileTexture.y);
+        }
         glVertex3d(face->point[i].x, face->point[i].y, face->point[i].z);
     }
     glEnd();
+
+    glDisable(GL_TEXTURE_2D);
 }
 
 void clearScene()
@@ -81,6 +92,7 @@ void drawTexture(Texture *tex)
     glColor3ub(tex->color.r, tex->color.v, tex->color.b);
 
     glEnable(GL_BLEND);
+    glEnable(GL_TEXTURE_2D);
 
     glBindTexture(GL_TEXTURE_2D, tex->IDtex);
 
@@ -99,5 +111,6 @@ void drawTexture(Texture *tex)
 
     glBindTexture(GL_TEXTURE_2D, 0);
 
+    glDisable(GL_TEXTURE_2D);
     glDisable(GL_BLEND);
 }

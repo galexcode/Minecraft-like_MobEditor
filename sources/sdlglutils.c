@@ -61,8 +61,8 @@ int loadTexture(Texture *texture)
     if(glID != 0)
     {
         texture->IDtex = glID;
-        texture->weight = gl_fliped_surface->w;
-        texture->height = gl_fliped_surface->h;
+        texture->wMax = gl_fliped_surface->w;
+        texture->hMax = gl_fliped_surface->h;
     }
     else
     {
@@ -72,6 +72,11 @@ int loadTexture(Texture *texture)
     SDL_FreeSurface(gl_fliped_surface);
     SDL_FreeSurface(gl_surface);
     SDL_FreeSurface(picture_surface);
+
+    texture->posTex[0].x = 0;
+    texture->posTex[0].y = 1;
+    texture->posTex[1].x = 1;
+    texture->posTex[1].y = 0;
 
     return 1;
 }

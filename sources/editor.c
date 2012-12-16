@@ -15,25 +15,35 @@ int editor()
     int leave = 0;
     int FOV = 70;
     int previousTicks = 0, actualTicks = 0;
-    double angleX = 0.01, angleY = 0, zoom = 2;
+    double angleX = 0.01, angleY = 0, zoomModel = 2, zoomTexEditor = 1;
     int indexMemberAffected = -1, indexFaceAffected = -1;
+    int differenceEventX = -1, differenceEventY = -1;
+    Face selectionTexture;
+    Point2D areaTexSelected[2];
+    int selectioningTex = 0;
+    Text buff;
     int selected = 0;
     int weightLetter[256];
     int selection = FACE_SELECTION;
     int stateEvent = EVENT_FOR_EDITOR;
-    Text currentText;
+    int textInput = 0;
+
+    double dimensionResized = -1;
+    Text textDimensionResized;
+
+    Text path;
 
     Point3D pos, target;
-    Model human;
+    Model model;
 
     Button *button;
     Texture texButton;
     Texture texText;
+    Texture textureEditor;
 
-    currentText.string = NULL;
-    currentText.nbChar = 0;
+    buff.shadow = 1;
 
-    button = malloc(NUMBER_BUTTON_EDITOR * sizeof(Button));
+    button = malloc(NUMBER_BUTTONS_EDITOR * sizeof(Button));
     if(button == NULL)
     {
         printf("Error allocating button's memory\n");
@@ -47,10 +57,28 @@ int editor()
     sprintf(texButton.path, "textures/gui/gui.png");
     loadTexture(&texButton);
 
+    sprintf(textureEditor.path, "textures/texEditor.png");
+    loadTexture(&textureEditor);
+
+    textureEditor.color.r = 255;
+    textureEditor.color.v = 255;
+    textureEditor.color.b = 255;
+    textureEditor.height = WINDOW_HEIGHT;
+    textureEditor.weight = textureEditor.wMax;
+    textureEditor.pos.x = WINDOW_WEIGHT - textureEditor.weight - 1;
+    textureEditor.pos.y = 0;
+
+    selectionTexture.point[0].z = 0;
+    selectionTexture.point[1].z = 0;
+
+    areaTexSelected[0].x = -1;
+    areaTexSelected[0].y = -1;
+    areaTexSelected[1].x = -1;
+    areaTexSelected[1].y = -1;
+
     attribButtons(button, &texButton);
 
-    initModel(&human);
-    loadModel("models/human.mclmdl", &human);
+    initModel(&model);
 
     target.x = 0;
     target.y = 0;
@@ -75,7 +103,7 @@ int editor()
             event.keydown[SDLK_ESCAPE] = 0;
         }
 
-        for(i = 0; i < NUMBER_BUTTON_EDITOR; i++)
+        for(i = 0; i < NUMBER_BUTTONS_EDITOR; i++)
         {
             if(selected == 0)
             {
@@ -97,47 +125,54 @@ int editor()
             else if (angleY < -360)
                 angleY = 360;
         }
-        if(event.mouse[SDL_BUTTON_WHEELDOWN] == 1 && stateEvent == EVENT_FOR_EDITOR)
+        if(event.mouse[SDL_BUTTON_WHEELDOWN] == 1 && stateEvent == EVENT_FOR_EDITOR && event.posX < textureEditor.pos.x)
         {
-            zoom += 0.05;
-            if(zoom > 10)
-                zoom = 10;
+            zoomModel += 0.05;
+            if(zoomModel > 10)
+                zoomModel = 10;
         }
-        if(event.mouse[SDL_BUTTON_WHEELUP] == 1 && stateEvent == EVENT_FOR_EDITOR)
+        if(event.mouse[SDL_BUTTON_WHEELUP] == 1 && stateEvent == EVENT_FOR_EDITOR && event.posX < textureEditor.pos.x)
         {
-            zoom -= 0.05;
-            if(zoom < 1)
-                zoom = 1;
+            zoomModel -= 0.05;
+            if(zoomModel < 1)
+                zoomModel = 1;
         }
-        if(event.mouse[SDL_BUTTON_RIGHT] == 1 && stateEvent == EVENT_FOR_EDITOR)
+        if(event.mouse[SDL_BUTTON_RIGHT] == 1 && stateEvent == EVENT_FOR_EDITOR && event.posX < textureEditor.pos.x)
         {
             if(selected == 1)
             {
                 selected = 0;
             }
-            else if(indexMemberAffected >= 0 && indexMemberAffected < human.nbMembers && indexFaceAffected >= 0 && indexFaceAffected < 6)
+            else if(indexMemberAffected >= 0 && indexMemberAffected < model.nbMembers && indexFaceAffected >= 0 && indexFaceAffected < 6)
             {
                 selected = 1;
             }
             event.mouse[SDL_BUTTON_RIGHT] = 0;
         }
-        if(event.mouse[SDL_BUTTON_LEFT] == 1 && stateEvent == EVENT_FOR_EDITOR)
+        if(event.mouse[SDL_BUTTON_LEFT] == 1 && stateEvent == EVENT_FOR_EDITOR && event.posX < textureEditor.pos.x)
         {
             selected = 0;
-        }
-        if(selected == 1)
-        {
-            if(indexMemberAffected >= 0 && indexMemberAffected < human.nbMembers && indexFaceAffected >= 0 && indexFaceAffected < 6 && selected && selection == FACE_SELECTION)
+
+            if(areaTexSelected[0].x >= 0)
             {
-                resizeCube(&human, indexMemberAffected, indexFaceAffected);
+                if(indexMemberAffected >= 0 && indexMemberAffected < model.nbMembers && indexFaceAffected >= 0 && indexFaceAffected < 6 && selection == FACE_SELECTION && areaTexSelected[0].x != -1)
+                {
+                    putTextureOnModel(&model, indexMemberAffected, indexFaceAffected, areaTexSelected);
+                }
             }
+        }
+        if(indexMemberAffected >= 0 && indexMemberAffected < model.nbMembers && indexFaceAffected >= 0 && indexFaceAffected < 6 && selection == FACE_SELECTION)
+        {
+            dimensionResized = resizeCube(&model, indexMemberAffected, indexFaceAffected, selected);
+            model.saved = 0;
         }
 
         if(button[0].selected == 1 && event.mouse[SDL_BUTTON_LEFT] == 1 && stateEvent == EVENT_FOR_EDITOR)
         {
-            if(human.nbMembers < MEMBERS_MAX)
+            if(model.nbMembers < MEMBERS_MAX)
             {
-                addCube(&human);
+                addCube(&model);
+                model.saved = 0;
                 event.mouse[SDL_BUTTON_LEFT] = 0;
             }
         }
@@ -158,81 +193,169 @@ int editor()
 
         if(button[2].selected == 1 && event.mouse[SDL_BUTTON_LEFT] == 1 && stateEvent == EVENT_FOR_EDITOR)
         {
-            saveModel("models/human.mclmdl", &human);
+            saveModel(path.string, &model);
+            model.saved = 1;
+            addStringToText(&button[2].text, "Saved");
             event.mouse[SDL_BUTTON_LEFT] = 0;
         }
         if(button[3].selected == 1 && event.mouse[SDL_BUTTON_LEFT] == 1 && stateEvent == EVENT_FOR_EDITOR)
         {
+            textInput = GET_MODEL_PATH;
+            event.mouse[SDL_BUTTON_LEFT] = 0;
             stateEvent = EVENT_FOR_STRING;
+            addStringToText(&buff, "");
+            SDL_EnableUNICODE(1);
+            button[3].textInput = 1;
         }
         if(button[4].selected == 1 && event.mouse[SDL_BUTTON_LEFT] == 1 && stateEvent == EVENT_FOR_EDITOR)
         {
+            textInput = GET_TEXTURE_PATH;
+            event.mouse[SDL_BUTTON_LEFT] = 0;
             stateEvent = EVENT_FOR_STRING;
+            addStringToText(&buff, "");
+            model.saved = 0;
+            SDL_EnableUNICODE(1);
+            button[4].textInput = 1;
         }
         if(event.keydown[SDLK_DELETE] == 1 && stateEvent == EVENT_FOR_EDITOR)
         {
             if(selected == 1 && selection == CUBE_SELECTION)
             {
-                removeCube(&human, &indexMemberAffected);
+                removeCube(&model, &indexMemberAffected);
+                model.saved = 0;
                 selected = 0;
             }
             event.keydown[SDLK_DELETE] = 0;
+        }
+        if(stateEvent == EVENT_FOR_STRING && event.keydown[SDLK_RETURN] == 1)
+        {
+            stateEvent = EVENT_FOR_EDITOR;
+            SDL_EnableUNICODE(0);
+            event.keydown[SDLK_RETURN] = 0;
+
+            if(textInput == GET_MODEL_PATH)
+            {
+                freeModel(&model);
+                createModel(buff.string, &model);
+                addStringToText(&path, buff.string);
+                button[3].textInput = 0;
+            }
+            else if(textInput == GET_TEXTURE_PATH)
+            {
+                sprintf(model.tex.path, "%s", buff.string);
+                openTexture(&model);
+                button[4].textInput = 0;
+            }
+        }
+
+        if(stateEvent == EVENT_FOR_STRING && event.keydown[SDLK_ESCAPE] == 1)
+        {
+            stateEvent = EVENT_FOR_EDITOR;
+            SDL_EnableUNICODE(0);
+            event.keydown[SDLK_ESCAPE] = 0;
+
+            for(i = 0; i < NUMBER_BUTTONS_EDITOR; i++)
+            {
+                button[i].textInput = 0;
+            }
+        }
+
+        if(model.tex.IDtex != 0 && event.posX >= textureEditor.pos.x && stateEvent == EVENT_FOR_EDITOR)
+        {
+            moveAndResizeTexture(&model.tex, &zoomTexEditor, textureEditor.pos.x, &differenceEventX, &differenceEventY);
+            selectAreaTex(&model.tex, areaTexSelected, &selectioningTex);
+            areaTexSelected[0].x = (int)areaTexSelected[0].x;
+            areaTexSelected[0].y = (int)areaTexSelected[0].y;
+            areaTexSelected[1].x = (int)areaTexSelected[1].x;
+            areaTexSelected[1].y = (int)areaTexSelected[1].y;
+            selectionTexture.point[0].x = areaTexSelected[0].x / model.tex.wMax * model.tex.weight + model.tex.pos.x;
+            selectionTexture.point[0].y = WINDOW_HEIGHT - (areaTexSelected[0].y / model.tex.hMax * model.tex.height + model.tex.pos.y);
+            selectionTexture.point[1].x = areaTexSelected[1].x / model.tex.wMax * model.tex.weight + model.tex.pos.x;
+            selectionTexture.point[1].y = WINDOW_HEIGHT - (areaTexSelected[1].y / model.tex.hMax * model.tex.height + model.tex.pos.y);
         }
 
         actualTicks = SDL_GetTicks();
 
         if(actualTicks - previousTicks > 15)
         {
-            deplacerCamera(&pos, angleX, angleY, &zoom);
+            moveCamera(&pos, angleX, angleY, &zoomModel);
 
-            if(!selected)
+            if(!selected && event.posX < textureEditor.pos.x)
             {
                 clearScene();
                 modeRender(RENDER_3D, &pos, &target, FOV);
-                renderModel(&human, COLLISION_MODE);
+                renderModel(&model, COLLISION_MODE);
 
-                collisionCursorModel(&human, &indexMemberAffected, &indexFaceAffected);
+                collisionCursorModel(&model, &indexMemberAffected, &indexFaceAffected);
             }
-            if(indexMemberAffected >= 0 && indexMemberAffected < human.nbMembers && indexFaceAffected >= 0 && indexFaceAffected < 6 && selection == FACE_SELECTION)
+            if(!selected && event.posX >= textureEditor.pos.x)
             {
-                human.member[indexMemberAffected].face[indexFaceAffected].color.r = 255;
-                human.member[indexMemberAffected].face[indexFaceAffected].color.v = 255;
-                human.member[indexMemberAffected].face[indexFaceAffected].color.b = 255;
+                    indexMemberAffected = -1;
+                    indexFaceAffected = -1;
             }
-            else if(indexMemberAffected >= 0 && indexMemberAffected < human.nbMembers && indexFaceAffected >= 0 && indexFaceAffected < 6 && selection == CUBE_SELECTION)
+            if(indexMemberAffected >= 0 && indexMemberAffected < model.nbMembers && indexFaceAffected >= 0 && indexFaceAffected < 6 && selection == FACE_SELECTION)
+            {
+                model.member[indexMemberAffected].face[indexFaceAffected].color.r = 241;
+                model.member[indexMemberAffected].face[indexFaceAffected].color.v = 248;
+                model.member[indexMemberAffected].face[indexFaceAffected].color.b = 12;
+            }
+            else if(indexMemberAffected >= 0 && indexMemberAffected < model.nbMembers && indexFaceAffected >= 0 && indexFaceAffected < 6 && selection == CUBE_SELECTION)
             {
                 for(i = 0; i < 6; i++)
                 {
-                    human.member[indexMemberAffected].face[i].color.r = 100 + i * 20;
-                    human.member[indexMemberAffected].face[i].color.v = 100 + i * 20;
-                    human.member[indexMemberAffected].face[i].color.b = 100 + i * 20;
+                    model.member[indexMemberAffected].face[i].color.r = 100 + i * 20;
+                    model.member[indexMemberAffected].face[i].color.v = 100 + i * 20;
+                    model.member[indexMemberAffected].face[i].color.b = 100 + i * 20;
                 }
             }
 
             clearScene();
 
             modeRender(RENDER_3D, &pos, &target, FOV);
-            renderModel(&human, RENDER_MODE);
+            renderModel(&model, RENDER_MODE);
+
+            sprintf(textDimensionResized.string, "%lf", dimensionResized);
+            textDimensionResized.nbChar = 8;
 
             modeRender(RENDER_2D, &pos, &target, FOV);
-            renderMenuEditor(button, &texText, weightLetter);
+            renderMenuEditor(&model, button, &texText, weightLetter, &buff, &textureEditor, &selectionTexture, &textDimensionResized);
 
             refreshScene();
-            if(indexMemberAffected >= 0 && indexMemberAffected < human.nbMembers && indexFaceAffected >= 0 && indexFaceAffected < 6 && selection == FACE_SELECTION)
+            if(indexMemberAffected >= 0 && indexMemberAffected < model.nbMembers && indexFaceAffected >= 0 && indexFaceAffected < 6 && selection == FACE_SELECTION)
             {
-                human.member[indexMemberAffected].face[indexFaceAffected].color.r = indexFaceAffected * 20 + 50;
-                human.member[indexMemberAffected].face[indexFaceAffected].color.v = indexFaceAffected * 20 + 50;
-                human.member[indexMemberAffected].face[indexFaceAffected].color.b = indexFaceAffected * 20 + 50;
+                if(model.member[indexMemberAffected].face[indexFaceAffected].point[0].coordFileTexture.x == -1)
+                {
+                    model.member[indexMemberAffected].face[indexFaceAffected].color.r = indexFaceAffected * 20 + 50;
+                    model.member[indexMemberAffected].face[indexFaceAffected].color.v = indexFaceAffected * 20 + 50;
+                    model.member[indexMemberAffected].face[indexFaceAffected].color.b = indexFaceAffected * 20 + 50;
+                }
+                else
+                {
+                    model.member[indexMemberAffected].face[indexFaceAffected].color.r = 255;
+                    model.member[indexMemberAffected].face[indexFaceAffected].color.v = 255;
+                    model.member[indexMemberAffected].face[indexFaceAffected].color.b = 255;
+                }
             }
-            else if(indexMemberAffected >= 0 && indexMemberAffected < human.nbMembers && indexFaceAffected >= 0 && indexFaceAffected < 6 && selection == CUBE_SELECTION)
+            else if(indexMemberAffected >= 0 && indexMemberAffected < model.nbMembers && indexFaceAffected >= 0 && indexFaceAffected < 6 && selection == CUBE_SELECTION)
             {
                 for(i = 0; i < 6; i++)
                 {
-                    human.member[indexMemberAffected].face[i].color.r = i * 20 + 50;
-                    human.member[indexMemberAffected].face[i].color.v = i * 20 + 50;
-                    human.member[indexMemberAffected].face[i].color.b = i * 20 + 50;
+                    model.member[indexMemberAffected].face[i].color.r = i * 20 + 50;
+                    model.member[indexMemberAffected].face[i].color.v = i * 20 + 50;
+                    model.member[indexMemberAffected].face[i].color.b = i * 20 + 50;
                 }
             }
+
+            if(stateEvent == EVENT_FOR_STRING)
+            {
+                addCharToString(&buff, getCharFromKeyboard());
+            }
+
+            if(model.saved == 0 && strstr(button[2].text.string, "Save Model") == NULL)
+            {
+                addStringToText(&button[2].text, "Save Model");
+            }
+
             previousTicks = actualTicks;
         }
         else
@@ -241,8 +364,10 @@ int editor()
         }
     }
 
-    freeModel(&human);
-
+    if(model.member != NULL)
+    {
+        freeModel(&model);
+    }
     return 1;
 }
 
@@ -251,47 +376,57 @@ int addCube(Model *model)
     Model tmp;
     int i;
 
-    initModel(&tmp);
-
-    tmp.nbMembers = model->nbMembers;
-    tmp.member = malloc(tmp.nbMembers * sizeof(Cube));
-    tmp.translation = malloc(tmp.nbMembers * sizeof(Point3D));
-
-    if(tmp.member == NULL || tmp.translation == NULL)
+    if(model->nbMembers > 0)
     {
-        printf("Error allocating memory 1\n");
-        return 0;
+        initModel(&tmp);
+
+        tmp.nbMembers = model->nbMembers;
+        tmp.member = malloc(tmp.nbMembers * sizeof(Cube));
+        tmp.translation = malloc(tmp.nbMembers * sizeof(Point3D));
+
+        if(tmp.member == NULL || tmp.translation == NULL)
+        {
+            printf("Error allocating memory 1\n");
+            return 0;
+        }
+
+        for(i = 0; i < tmp.nbMembers; i++)
+        {
+            tmp.member[i] = model->member[i];
+            tmp.translation[i] = model->translation[i];
+        }
+
+        model->nbMembers = tmp.nbMembers + 1;
+        model->member = realloc(model->member, model->nbMembers * sizeof(Cube));
+        model->translation = realloc(model->translation, model->nbMembers * sizeof(Point3D));
+
+        if(model->member == NULL)
+        {
+            printf("Error allocating memory 2 (member)\n");
+            printf("errno = %d\n", errno);
+            return 0;
+        }
+        if(model->translation == NULL)
+        {
+            printf("Error allocating memory 2 (translation)\n");
+            return 0;
+        }
+
+        for(i = 0; i < tmp.nbMembers; i++)
+        {
+            model->member[i] = tmp.member[i];
+            model->translation[i] = tmp.translation[i];
+        }
+
+        freeModel(&tmp);
     }
 
-    for(i = 0; i < tmp.nbMembers; i++)
+    else
     {
-        tmp.member[i] = model->member[i];
-        tmp.translation[i] = model->translation[i];
+        model->nbMembers++;
+        model->member = malloc(model->nbMembers * sizeof(Cube));
+        model->translation = malloc(model->nbMembers * sizeof(Point3D));
     }
-
-    model->nbMembers = tmp.nbMembers + 1;
-    model->member = realloc(model->member, model->nbMembers * sizeof(Cube));
-    model->translation = realloc(model->translation, model->nbMembers * sizeof(Point3D));
-
-    if(model->member == NULL)
-    {
-        printf("Error allocating memory 2 (member)\n");
-        printf("errno = %d\n", errno);
-        return 0;
-    }
-    if(model->translation == NULL)
-    {
-        printf("Error allocating memory 2 (translation)\n");
-        return 0;
-    }
-
-    for(i = 0; i < tmp.nbMembers; i++)
-    {
-        model->member[i] = tmp.member[i];
-        model->translation[i] = tmp.translation[i];
-    }
-
-    freeModel(&tmp);
 
     model->translation[model->nbMembers - 1].x = 0;
     model->translation[model->nbMembers - 1].y = 0;
@@ -336,12 +471,12 @@ int removeCube(Model *model, int *indexMemberAffected)
 
     for(i = 0; i < (*indexMemberAffected); i++)
     {
-        attribCube(&model->member[i], &tmp.member[i]);
+        model->member[i] = tmp.member[i];
         model->translation[i] = tmp.translation[i];
     }
     for(i = (*indexMemberAffected); i < model->nbMembers; i++)
     {
-        attribCube(&model->member[i], &tmp.member[i + 1]);
+        model->member[i] = tmp.member[i + 1];
         model->translation[i] = tmp.translation[i + 1];
     }
 
@@ -368,8 +503,8 @@ int initCube(Cube *cube)
             cube->face[i].point[j].y = 0;
             cube->face[i].point[j].z = 0;
 
-            cube->face[i].point[j].coordFileTexture.x = 0;
-            cube->face[i].point[j].coordFileTexture.y = 0;
+            cube->face[i].point[j].coordFileTexture.x = -1;
+            cube->face[i].point[j].coordFileTexture.y = -1;
         }
     }
 
@@ -418,7 +553,7 @@ int initCube(Cube *cube)
     return 1;
 }
 
-void deplacerCamera(Point3D *pos, double angleX, double angleY, double *zoom)
+void moveCamera(Point3D *pos, double angleX, double angleY, double *zoom)
 {
     pos->x = sin(M_PI / 180 * angleY) * sin(M_PI / 180 * angleX) * (*zoom);
     pos->z = cos(M_PI / 180 * angleY) * sin(M_PI / 180 * angleX) * (*zoom);
@@ -443,9 +578,9 @@ void collisionCursorModel(Model *model, int *indexMemberAffected, int *indexFace
     }
 }
 
-void resizeCube(Model *model, int indexMemberAffected, int indexFaceAffected)
+double resizeCube(Model *model, int indexMemberAffected, int indexFaceAffected, int selected)
 {
-    int coordResized = 0;
+    int coordResized = -1;
     int i, j, k;
     double dimensionResized = 0;
     Point3D tmp;
@@ -462,20 +597,29 @@ void resizeCube(Model *model, int indexMemberAffected, int indexFaceAffected)
         case X:
             for(i = 0; i < 4; i++)
             {
-                tmp = model->member[indexMemberAffected].face[indexFaceAffected].point[i];
-                model->member[indexMemberAffected].face[indexFaceAffected].point[i].x += event.xrel * 0.005;
+                if(selected)
+                {
+                    tmp = model->member[indexMemberAffected].face[indexFaceAffected].point[i];
+                    model->member[indexMemberAffected].face[indexFaceAffected].point[i].x += event.xrel * 0.005;
+                }
+
                 dimensionResized = model->member[indexMemberAffected].face[indexFaceAffected].point[i].x - model->member[indexMemberAffected].face[(indexFaceAffected + 2) % 4].point[i].x;
 
                 if(dimensionResized < 0)
                     dimensionResized *= -1;
 
-                for(j = 0; j < 6; j++)
+                if(selected)
                 {
-                    for(k = 0; k < 4; k++)
+                    for(j = 0; j < 6; j++)
                     {
-                        if(model->member[indexMemberAffected].face[j].point[k].x == tmp.x && model->member[indexMemberAffected].face[j].point[k].y == tmp.y && model->member[indexMemberAffected].face[j].point[k].z == tmp.z)
+                        for(k = 0; k < 4; k++)
                         {
-                           model->member[indexMemberAffected].face[j].point[k] = model->member[indexMemberAffected].face[indexFaceAffected].point[i];
+                            if(model->member[indexMemberAffected].face[j].point[k].x == tmp.x && model->member[indexMemberAffected].face[j].point[k].y == tmp.y && model->member[indexMemberAffected].face[j].point[k].z == tmp.z)
+                            {
+                               model->member[indexMemberAffected].face[j].point[k].x = model->member[indexMemberAffected].face[indexFaceAffected].point[i].x;
+                               model->member[indexMemberAffected].face[j].point[k].y = model->member[indexMemberAffected].face[indexFaceAffected].point[i].y;
+                               model->member[indexMemberAffected].face[j].point[k].z = model->member[indexMemberAffected].face[indexFaceAffected].point[i].z;
+                            }
                         }
                     }
                 }
@@ -484,20 +628,28 @@ void resizeCube(Model *model, int indexMemberAffected, int indexFaceAffected)
         case Y:
             for(i = 0; i < 4; i++)
             {
-                tmp = model->member[indexMemberAffected].face[indexFaceAffected].point[i];
-                model->member[indexMemberAffected].face[indexFaceAffected].point[i].y -= event.yrel * 0.005;
+                if(selected)
+                {
+                    tmp = model->member[indexMemberAffected].face[indexFaceAffected].point[i];
+                    model->member[indexMemberAffected].face[indexFaceAffected].point[i].y -= event.yrel * 0.005;
+                }
                 dimensionResized = model->member[indexMemberAffected].face[4].point[i].y - model->member[indexMemberAffected].face[5].point[i].y;
 
                 if(dimensionResized < 0)
                     dimensionResized *= -1;
 
-                for(j = 0; j < 6; j++)
+                if(selected)
                 {
-                    for(k = 0; k < 4; k++)
+                    for(j = 0; j < 6; j++)
                     {
-                        if(model->member[indexMemberAffected].face[j].point[k].x == tmp.x && model->member[indexMemberAffected].face[j].point[k].y == tmp.y && model->member[indexMemberAffected].face[j].point[k].z == tmp.z)
+                        for(k = 0; k < 4; k++)
                         {
-                           model->member[indexMemberAffected].face[j].point[k] = model->member[indexMemberAffected].face[indexFaceAffected].point[i];
+                            if(model->member[indexMemberAffected].face[j].point[k].x == tmp.x && model->member[indexMemberAffected].face[j].point[k].y == tmp.y && model->member[indexMemberAffected].face[j].point[k].z == tmp.z)
+                            {
+                               model->member[indexMemberAffected].face[j].point[k].x = model->member[indexMemberAffected].face[indexFaceAffected].point[i].x;
+                               model->member[indexMemberAffected].face[j].point[k].y = model->member[indexMemberAffected].face[indexFaceAffected].point[i].y;
+                               model->member[indexMemberAffected].face[j].point[k].z = model->member[indexMemberAffected].face[indexFaceAffected].point[i].z;
+                            }
                         }
                     }
                 }
@@ -506,20 +658,28 @@ void resizeCube(Model *model, int indexMemberAffected, int indexFaceAffected)
         case Z:
             for(i = 0; i < 4; i++)
             {
-                tmp = model->member[indexMemberAffected].face[indexFaceAffected].point[i];
-                model->member[indexMemberAffected].face[indexFaceAffected].point[i].z += event.xrel * 0.005;
+                if(selected)
+                {
+                    tmp = model->member[indexMemberAffected].face[indexFaceAffected].point[i];
+                    model->member[indexMemberAffected].face[indexFaceAffected].point[i].z += event.xrel * 0.005;
+                }
                 dimensionResized = model->member[indexMemberAffected].face[indexFaceAffected].point[i].z - model->member[indexMemberAffected].face[(indexFaceAffected + 2) % 4].point[i].z;
 
                 if(dimensionResized < 0)
                     dimensionResized *= -1;
 
-                for(j = 0; j < 6; j++)
+                if(selected)
                 {
-                    for(k = 0; k < 4; k++)
+                    for(j = 0; j < 6; j++)
                     {
-                        if(model->member[indexMemberAffected].face[j].point[k].x == tmp.x && model->member[indexMemberAffected].face[j].point[k].y == tmp.y && model->member[indexMemberAffected].face[j].point[k].z == tmp.z)
+                        for(k = 0; k < 4; k++)
                         {
-                           model->member[indexMemberAffected].face[j].point[k] = model->member[indexMemberAffected].face[indexFaceAffected].point[i];
+                            if(model->member[indexMemberAffected].face[j].point[k].x == tmp.x && model->member[indexMemberAffected].face[j].point[k].y == tmp.y && model->member[indexMemberAffected].face[j].point[k].z == tmp.z)
+                            {
+                               model->member[indexMemberAffected].face[j].point[k].x = model->member[indexMemberAffected].face[indexFaceAffected].point[i].x;
+                               model->member[indexMemberAffected].face[j].point[k].y = model->member[indexMemberAffected].face[indexFaceAffected].point[i].y;
+                               model->member[indexMemberAffected].face[j].point[k].z = model->member[indexMemberAffected].face[indexFaceAffected].point[i].z;
+                            }
                         }
                     }
                 }
@@ -527,55 +687,147 @@ void resizeCube(Model *model, int indexMemberAffected, int indexFaceAffected)
             break;
     }
 
-    printf("%lf\n", dimensionResized);
+    return dimensionResized;
 }
 
-void renderMenuEditor(Button *button, Texture *textureText, int *weightLetter)
+void renderMenuEditor(Model *model, Button *button, Texture *textureText, int *weightLetter, Text *buff, Texture *textureEditor, Face *selectionTexture, Text *textDimensionResized)
 {
     int i;
 
     glPushMatrix();
     glTranslated(0, 0, -100);
-    for(i = 0; i < NUMBER_BUTTON_EDITOR; i++)
+    drawTexture(textureEditor);
+    for(i = 0; i < NUMBER_BUTTONS_EDITOR; i++)
     {
-        renderButton(&button[i], textureText, weightLetter);
+        renderButton(&button[i], textureText, weightLetter, buff);
     }
+
+    glTranslated(0, 0, -1);
+    drawTexture(&model->tex);
+    glTranslated(0, 0, 1);
+
+    glBegin(GL_QUADS);
+    glVertex2d(selectionTexture->point[0].x, selectionTexture->point[0].y);
+    glVertex2d(selectionTexture->point[1].x, selectionTexture->point[0].y);
+    glVertex2d(selectionTexture->point[1].x, selectionTexture->point[1].y);
+    glVertex2d(selectionTexture->point[0].x, selectionTexture->point[1].y);
+    glEnd();
+
+    writeText(textureText, *textDimensionResized, weightLetter, textureEditor->pos.x - 100, WINDOW_HEIGHT - 20);
+
     glPopMatrix();
 }
 
-int attribCube(Cube *cubeCopy, const Cube *cubeToCopy)
+int moveAndResizeTexture(Texture *tex, double *zoom, int xMin, int *differenceEventX, int *differenceEventY)
 {
-    int i, j;
-
-    for(i = 0; i < 6; i++)
+    if(collisionCursorTexture(tex))
     {
-        cubeCopy->IDVBO = cubeToCopy->IDVBO;
-        cubeCopy->face[i].color.r = cubeToCopy->face[i].color.r;
-        cubeCopy->face[i].color.v = cubeToCopy->face[i].color.v;
-        cubeCopy->face[i].color.b = cubeToCopy->face[i].color.b;
-        for(j = 0; j < 4; j++)
+        if(event.mouse[SDL_BUTTON_WHEELDOWN] == 1)
         {
-            cubeCopy->face[i].point[j].x = cubeToCopy->face[i].point[j].x;
-            cubeCopy->face[i].point[j].y = cubeToCopy->face[i].point[j].y;
-            cubeCopy->face[i].point[j].z = cubeToCopy->face[i].point[j].z;
+            if((*zoom) > 0.5)
+                (*zoom) -= 0.5;
+
+            tex->weight = (*zoom) * (double)tex->wMax;
+            tex->height = (*zoom) * (double)tex->hMax;
+            event.mouse[SDL_BUTTON_WHEELDOWN] = 0;
         }
-        sprintf(cubeCopy->face[i].tex.path, "%s", cubeToCopy->face[i].tex.path);
-        cubeCopy->face[i].tex.IDtex = cubeToCopy->face[i].tex.IDtex;
-        cubeCopy->face[i].tex.pos.x = cubeToCopy->face[i].tex.pos.x;
-        cubeCopy->face[i].tex.pos.y = cubeToCopy->face[i].tex.pos.y;
-        for(j = 0; j < 2; j++)
+        if(event.mouse[SDL_BUTTON_WHEELUP] == 1)
         {
-            cubeCopy->face[i].tex.posTex[j].x = cubeToCopy->face[i].tex.posTex[j].x;
-            cubeCopy->face[i].tex.posTex[j].y = cubeToCopy->face[i].tex.posTex[j].y;
+            (*zoom) += 0.5;
+            tex->weight = (*zoom) * (double)tex->wMax;
+            tex->height = (*zoom) * (double)tex->hMax;
+            event.mouse[SDL_BUTTON_WHEELDOWN] = 0;
         }
-        cubeCopy->face[i].tex.weight = cubeToCopy->face[i].tex.weight;
-        cubeCopy->face[i].tex.height = cubeToCopy->face[i].tex.height;
-        cubeCopy->face[i].tex.wMax = cubeToCopy->face[i].tex.wMax;
-        cubeCopy->face[i].tex.hMax = cubeToCopy->face[i].tex.hMax;
-        cubeCopy->face[i].tex.color.r = cubeCopy->face[i].tex.color.r;
-        cubeCopy->face[i].tex.color.v = cubeCopy->face[i].tex.color.v;
-        cubeCopy->face[i].tex.color.b = cubeCopy->face[i].tex.color.b;
+        if(event.mouse[SDL_BUTTON_RIGHT] == 1)
+        {
+            if((*differenceEventX) == -1)
+            {
+                (*differenceEventX) = event.posX - tex->pos.x;
+                (*differenceEventY) = event.posY - tex->pos.y;
+            }
+
+            tex->pos.x = event.posX - (*differenceEventX);
+            tex->pos.y = event.posY - (*differenceEventY);
+
+            if(tex->pos.x <= xMin)
+            {
+                tex->pos.x = xMin;
+            }
+        }
+        else
+        {
+            (*differenceEventX) = -1;
+            (*differenceEventY) = -1;
+        }
     }
+    return 1;
+}
+
+int selectAreaTex(Texture *tex, Point2D coordsArea[2], int *selectioning)
+{
+    if(tex->path[0] != 0)
+    {
+        if(!collisionCursorTexture(tex) && event.mouse[SDL_BUTTON_LEFT] == 1 && !(*selectioning))
+        {
+            coordsArea[0].x = -1;
+            coordsArea[0].y = -1;
+            coordsArea[1].x = -1;
+            coordsArea[1].y = -1;
+        }
+
+        if(collisionCursorTexture(tex))
+        {
+            if(event.mouse[SDL_BUTTON_LEFT] == 1)
+            {
+                if((*selectioning == 0))
+                {
+                    (*selectioning) = 1;
+                    coordsArea[0].x = ((event.posX - tex->pos.x) * tex->wMax) / tex->weight;
+                    coordsArea[0].y = ((event.posY - tex->pos.y) * tex->hMax) / tex->height;
+                }
+            }
+            if((*selectioning == 1 && event.mouse[SDL_BUTTON_LEFT] == 1))
+            {
+                coordsArea[1].x = ((event.posX - tex->pos.x) * tex->wMax) / tex->weight;
+                coordsArea[1].y = ((event.posY - tex->pos.y) * tex->hMax) / tex->height;
+            }
+        }
+        if(event.mouse[SDL_BUTTON_LEFT] == 0)
+        {
+            (*selectioning) = 0;
+        }
+    }
+
+    return 1;
+}
+
+int collisionCursorTexture(Texture *tex)
+{
+    if(event.posX >= tex->pos.x && event.posX <= tex->pos.x + tex->weight)
+    {
+        if(event.posY >= tex->pos.y && event.posY <= tex->pos.y + tex->height)
+        {
+            return 1;
+        }
+    }
+
+    return 0;
+}
+
+int putTextureOnModel(Model *model, int indexMemberAffected, int indexFaceAffected, Point2D areaTexSelected[2])
+{
+    model->member[indexMemberAffected].face[indexFaceAffected].point[0].coordFileTexture.x = areaTexSelected[0].x / model->tex.wMax;
+    model->member[indexMemberAffected].face[indexFaceAffected].point[0].coordFileTexture.y = (model->tex.hMax - areaTexSelected[0].y) / model->tex.hMax;
+    model->member[indexMemberAffected].face[indexFaceAffected].point[1].coordFileTexture.x = areaTexSelected[0].x / model->tex.wMax;
+    model->member[indexMemberAffected].face[indexFaceAffected].point[1].coordFileTexture.y = (model->tex.hMax - areaTexSelected[1].y) / model->tex.hMax;
+    model->member[indexMemberAffected].face[indexFaceAffected].point[2].coordFileTexture.x = areaTexSelected[1].x / model->tex.wMax;
+    model->member[indexMemberAffected].face[indexFaceAffected].point[2].coordFileTexture.y = (model->tex.hMax - areaTexSelected[1].y) / model->tex.hMax;
+    model->member[indexMemberAffected].face[indexFaceAffected].point[3].coordFileTexture.x = areaTexSelected[1].x / model->tex.wMax;
+    model->member[indexMemberAffected].face[indexFaceAffected].point[3].coordFileTexture.y = (model->tex.hMax - areaTexSelected[0].y) / model->tex.hMax;
+
+    model->member[indexMemberAffected].face[indexFaceAffected].color.r = 255;
+    model->member[indexMemberAffected].face[indexFaceAffected].color.v = 255;
+    model->member[indexMemberAffected].face[indexFaceAffected].color.b = 255;
 
     return 1;
 }

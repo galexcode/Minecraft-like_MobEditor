@@ -15,13 +15,15 @@
     #define WINDOW_WEIGHT 1200
     #define WINDOW_HEIGHT 650
     #define MEMBERS_MAX 100
-    #define NUMBER_BUTTON_EDITOR 5
+    #define NUMBER_BUTTONS_EDITOR 5
+    #define SIZE_PATH_MAX 256
 
     enum{COLLISION_MODE, RENDER_MODE};
     enum{RENDER_2D, RENDER_3D};
     enum{X, Y, Z};
     enum{FACE_SELECTION, CUBE_SELECTION};
     enum{EVENT_FOR_STRING, EVENT_FOR_EDITOR};
+    enum{GET_MODEL_PATH, GET_TEXTURE_PATH};
 
     ///Structures
 
@@ -34,7 +36,7 @@
     typedef struct Point3D Point3D;
     struct Point3D
     {
-        double x, y, z;
+        float x, y, z;
         Point2D coordFileTexture;
     };
 
@@ -47,7 +49,7 @@
     typedef struct Texture Texture;//Same coords than SDL
     struct Texture
     {
-        char path[128];
+        char path[SIZE_PATH_MAX];
         GLuint IDtex;//Id of the texture to apply
         Point2D pos;
         Point2D posTex[2];//beginning point of the texture in the file (in pixels)
@@ -61,7 +63,6 @@
     {
         Point3D point[4];
         Color color;
-        Texture tex;
     };
 
     typedef struct Cube Cube;
@@ -74,7 +75,7 @@
     typedef struct Text Text;
     struct Text
     {
-        char *string;
+        char string[SIZE_PATH_MAX];
         int nbChar;
         int shadow;
     };
@@ -89,6 +90,7 @@
         int weight, height;//Of the button
         int wMax, hMax;//Of the total file
         int selected;//If it is selected
+        int textInput;
         Text text;
     };
 
@@ -99,6 +101,8 @@
         int init;
         Cube *member;
         Point3D *translation;
+        Texture tex;
+        int saved;
     };
 
 #endif
