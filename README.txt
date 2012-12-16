@@ -16,5 +16,6 @@ To add a texture on your model, use the "Add a texture" button, enter the path o
   -If the loading succeed, the texture is rendered on the right of the window, make a selection of it.
     You can move and resize your texture.
   -Apply it on your model left clicking on the face.
+  -Use RCTRL or LCTRL keydown to reverse texture.
 
 To report a bug : http://www.siteduzero.com/forum-83-799240-p1-jeu-c-opengl-minecraft-like.html

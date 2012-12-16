@@ -195,4 +195,10 @@ void attribButtons(Button *button, Texture *texButton)
     button[4].pos.x = WINDOW_WEIGHT - button[4].weight - 10;
     button[4].pos.y = 10;
     addStringToText(&button[4].text, "Apply a texture");
+
+    button[5].height = 40;
+    button[5].weight = 200;
+    button[5].pos.x = WINDOW_WEIGHT - button[5].weight - 10;
+    button[5].pos.y = WINDOW_HEIGHT - button[5].height - 10;
+    addStringToText(&button[5].text, "Invert Texture : X");
 }

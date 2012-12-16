@@ -13,5 +13,6 @@
     int selectAreaTex(Texture *tex, Point2D coordsArea[2], int *selectioning);
     int collisionCursorTexture(Texture *tex);
     int putTextureOnModel(Model *model, int indexMemberAffected, int indexFaceAffected, Point2D areaTexSelected[2]);
+    void reverseTexture(Model *model, int axisReversing, int indexMemberAffected, int indexFaceAffected);
 
 #endif

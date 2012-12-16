@@ -27,6 +27,7 @@ int editor()
     int selection = FACE_SELECTION;
     int stateEvent = EVENT_FOR_EDITOR;
     int textInput = 0;
+    int axisReversing = X_AXIS;
 
     double dimensionResized = -1;
     Text textDimensionResized;
@@ -161,6 +162,15 @@ int editor()
                 }
             }
         }
+        if((event.keydown[SDLK_LCTRL] == 1 || event.keydown[SDLK_RCTRL] == 1) && stateEvent == EVENT_FOR_EDITOR)
+        {
+            if(indexMemberAffected >= 0 && indexMemberAffected < model.nbMembers && indexFaceAffected >= 0 && indexFaceAffected < 6 && selection == FACE_SELECTION)
+            {
+                reverseTexture(&model, axisReversing, indexMemberAffected, indexFaceAffected);
+            }
+            event.keydown[SDLK_RCTRL] = 0;
+            event.keydown[SDLK_LCTRL] = 0;
+        }
         if(indexMemberAffected >= 0 && indexMemberAffected < model.nbMembers && indexFaceAffected >= 0 && indexFaceAffected < 6 && selection == FACE_SELECTION)
         {
             dimensionResized = resizeCube(&model, indexMemberAffected, indexFaceAffected, selected);
@@ -216,6 +226,21 @@ int editor()
             model.saved = 0;
             SDL_EnableUNICODE(1);
             button[4].textInput = 1;
+        }
+        if(button[5].selected == 1 && event.mouse[SDL_BUTTON_LEFT] == 1 && stateEvent == EVENT_FOR_EDITOR)
+        {
+            if(axisReversing == X_AXIS)
+            {
+                addStringToText(&button[5].text, "Invert Texture : Y");
+                axisReversing = Y_AXIS;
+            }
+            else
+            {
+                addStringToText(&button[5].text, "Invert Texture : X");
+                axisReversing = X_AXIS;
+            }
+
+            event.mouse[SDL_BUTTON_LEFT] = 0;
         }
         if(event.keydown[SDLK_DELETE] == 1 && stateEvent == EVENT_FOR_EDITOR)
         {
@@ -830,4 +855,30 @@ int putTextureOnModel(Model *model, int indexMemberAffected, int indexFaceAffect
     model->member[indexMemberAffected].face[indexFaceAffected].color.b = 255;
 
     return 1;
+}
+
+void reverseTexture(Model *model, int axisReversing, int indexMemberAffected, int indexFaceAffected)
+{
+    Point2D tmp;
+
+    if(axisReversing == X_AXIS)
+    {
+        tmp = model->member[indexMemberAffected].face[indexFaceAffected].point[0].coordFileTexture;
+        model->member[indexMemberAffected].face[indexFaceAffected].point[0].coordFileTexture = model->member[indexMemberAffected].face[indexFaceAffected].point[3].coordFileTexture;
+        model->member[indexMemberAffected].face[indexFaceAffected].point[3].coordFileTexture = tmp;
+
+        tmp = model->member[indexMemberAffected].face[indexFaceAffected].point[1].coordFileTexture;
+        model->member[indexMemberAffected].face[indexFaceAffected].point[1].coordFileTexture = model->member[indexMemberAffected].face[indexFaceAffected].point[2].coordFileTexture;
+        model->member[indexMemberAffected].face[indexFaceAffected].point[2].coordFileTexture = tmp;
+    }
+    else
+    {
+        tmp = model->member[indexMemberAffected].face[indexFaceAffected].point[0].coordFileTexture;
+        model->member[indexMemberAffected].face[indexFaceAffected].point[0].coordFileTexture = model->member[indexMemberAffected].face[indexFaceAffected].point[1].coordFileTexture;
+        model->member[indexMemberAffected].face[indexFaceAffected].point[1].coordFileTexture = tmp;
+
+        tmp = model->member[indexMemberAffected].face[indexFaceAffected].point[2].coordFileTexture;
+        model->member[indexMemberAffected].face[indexFaceAffected].point[2].coordFileTexture = model->member[indexMemberAffected].face[indexFaceAffected].point[3].coordFileTexture;
+        model->member[indexMemberAffected].face[indexFaceAffected].point[3].coordFileTexture = tmp;
+    }
 }
