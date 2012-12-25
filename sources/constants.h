@@ -5,6 +5,11 @@
     #include <SDL/SDL_image.h>
     #include <GL/glew.h>
 
+    #if defined WIN32
+        #include <windows.h>
+        #include <tchar.h>
+    #endif
+
     #include <stdio.h>
     #include <stdlib.h>
     #include <math.h>
@@ -16,7 +21,7 @@
     #define WINDOW_HEIGHT 650
     #define MEMBERS_MAX 100
     #define NUMBER_BUTTONS_EDITOR 6
-    #define SIZE_PATH_MAX 256
+    #define SIZE_PATH_MAX 512
 
     enum{COLLISION_MODE, RENDER_MODE};
     enum{RENDER_2D, RENDER_3D};
@@ -25,6 +30,7 @@
     enum{EVENT_FOR_STRING, EVENT_FOR_EDITOR};
     enum{GET_MODEL_PATH, GET_TEXTURE_PATH};
     enum{X_AXIS, Y_AXIS, Z_AXIS};
+    enum{MODELS, TEXTURES};
 
     ///Structures
 

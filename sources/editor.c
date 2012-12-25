@@ -6,10 +6,11 @@
 #include "sdlglutils.h"
 #include "button.h"
 #include "text.h"
+#include "tools.h"
 
 extern Input event;
 
-int editor()
+int editor(char *mainPath, char *pathModel)
 {
     int i;
     int leave = 0;
@@ -26,13 +27,10 @@ int editor()
     int weightLetter[256];
     int selection = FACE_SELECTION;
     int stateEvent = EVENT_FOR_EDITOR;
-    int textInput = 0;
     int axisReversing = X_AXIS;
 
     double dimensionResized = -1;
     Text textDimensionResized;
-
-    Text path;
 
     Point3D pos, target;
     Model model;
@@ -50,15 +48,16 @@ int editor()
         printf("Error allocating button's memory\n");
     }
 
-    loadWeightLetters("textures/font/default.properties", &weightLetter[0]);
+    sprintf(buff.string, "%stextures/font/default.properties", mainPath);
+    loadWeightLetters(buff.string, &weightLetter[0]);
 
-    sprintf(texText.path, "textures/font/default.png");
+    sprintf(texText.path, "%stextures/font/default.png", mainPath);
     loadTexture(&texText);
 
-    sprintf(texButton.path, "textures/gui/gui.png");
+    sprintf(texButton.path, "%stextures/gui/gui.png", mainPath);
     loadTexture(&texButton);
 
-    sprintf(textureEditor.path, "textures/texEditor.png");
+    sprintf(textureEditor.path, "%stextures/texEditor.png", mainPath);
     loadTexture(&textureEditor);
 
     textureEditor.color.r = 255;
@@ -80,6 +79,11 @@ int editor()
     attribButtons(button, &texButton);
 
     initModel(&model);
+
+    if(pathModel[0] != 0)
+    {
+        loadModel(mainPath, pathModel, &model);
+    }
 
     target.x = 0;
     target.y = 0;
@@ -203,29 +207,28 @@ int editor()
 
         if(button[2].selected == 1 && event.mouse[SDL_BUTTON_LEFT] == 1 && stateEvent == EVENT_FOR_EDITOR)
         {
-            saveModel(path.string, &model);
+            saveModel(pathModel, &model);
             model.saved = 1;
             addStringToText(&button[2].text, "Saved");
             event.mouse[SDL_BUTTON_LEFT] = 0;
         }
         if(button[3].selected == 1 && event.mouse[SDL_BUTTON_LEFT] == 1 && stateEvent == EVENT_FOR_EDITOR)
         {
-            textInput = GET_MODEL_PATH;
+            if(openBrowser(buff.string, MODELS))
+            {
+                createModel(mainPath, buff.string, &model);
+                sprintf(pathModel, buff.string);
+            }
             event.mouse[SDL_BUTTON_LEFT] = 0;
-            stateEvent = EVENT_FOR_STRING;
-            addStringToText(&buff, "");
-            SDL_EnableUNICODE(1);
-            button[3].textInput = 1;
         }
         if(button[4].selected == 1 && event.mouse[SDL_BUTTON_LEFT] == 1 && stateEvent == EVENT_FOR_EDITOR)
         {
-            textInput = GET_TEXTURE_PATH;
+            if(openBrowser(buff.string, TEXTURES))
+            {
+                getNameFileFromPath(mainPath, buff.string, model.tex.path);
+            }
+            openTexture(mainPath, &model);
             event.mouse[SDL_BUTTON_LEFT] = 0;
-            stateEvent = EVENT_FOR_STRING;
-            addStringToText(&buff, "");
-            model.saved = 0;
-            SDL_EnableUNICODE(1);
-            button[4].textInput = 1;
         }
         if(button[5].selected == 1 && event.mouse[SDL_BUTTON_LEFT] == 1 && stateEvent == EVENT_FOR_EDITOR)
         {
@@ -251,26 +254,6 @@ int editor()
                 selected = 0;
             }
             event.keydown[SDLK_DELETE] = 0;
-        }
-        if(stateEvent == EVENT_FOR_STRING && event.keydown[SDLK_RETURN] == 1)
-        {
-            stateEvent = EVENT_FOR_EDITOR;
-            SDL_EnableUNICODE(0);
-            event.keydown[SDLK_RETURN] = 0;
-
-            if(textInput == GET_MODEL_PATH)
-            {
-                freeModel(&model);
-                createModel(buff.string, &model);
-                addStringToText(&path, buff.string);
-                button[3].textInput = 0;
-            }
-            else if(textInput == GET_TEXTURE_PATH)
-            {
-                sprintf(model.tex.path, "%s", buff.string);
-                openTexture(&model);
-                button[4].textInput = 0;
-            }
         }
 
         if(stateEvent == EVENT_FOR_STRING && event.keydown[SDLK_ESCAPE] == 1)
@@ -841,14 +824,14 @@ int collisionCursorTexture(Texture *tex)
 
 int putTextureOnModel(Model *model, int indexMemberAffected, int indexFaceAffected, Point2D areaTexSelected[2])
 {
-    model->member[indexMemberAffected].face[indexFaceAffected].point[0].coordFileTexture.x = areaTexSelected[0].x / model->tex.wMax;
-    model->member[indexMemberAffected].face[indexFaceAffected].point[0].coordFileTexture.y = (model->tex.hMax - areaTexSelected[0].y) / model->tex.hMax;
-    model->member[indexMemberAffected].face[indexFaceAffected].point[1].coordFileTexture.x = areaTexSelected[0].x / model->tex.wMax;
-    model->member[indexMemberAffected].face[indexFaceAffected].point[1].coordFileTexture.y = (model->tex.hMax - areaTexSelected[1].y) / model->tex.hMax;
-    model->member[indexMemberAffected].face[indexFaceAffected].point[2].coordFileTexture.x = areaTexSelected[1].x / model->tex.wMax;
-    model->member[indexMemberAffected].face[indexFaceAffected].point[2].coordFileTexture.y = (model->tex.hMax - areaTexSelected[1].y) / model->tex.hMax;
-    model->member[indexMemberAffected].face[indexFaceAffected].point[3].coordFileTexture.x = areaTexSelected[1].x / model->tex.wMax;
-    model->member[indexMemberAffected].face[indexFaceAffected].point[3].coordFileTexture.y = (model->tex.hMax - areaTexSelected[0].y) / model->tex.hMax;
+    model->member[indexMemberAffected].face[indexFaceAffected].point[0].coordFileTexture.x = areaTexSelected[1].x / model->tex.wMax;
+    model->member[indexMemberAffected].face[indexFaceAffected].point[0].coordFileTexture.y = (model->tex.hMax - areaTexSelected[1].y) / model->tex.hMax;
+    model->member[indexMemberAffected].face[indexFaceAffected].point[1].coordFileTexture.x = areaTexSelected[1].x / model->tex.wMax;
+    model->member[indexMemberAffected].face[indexFaceAffected].point[1].coordFileTexture.y = (model->tex.hMax - areaTexSelected[0].y) / model->tex.hMax;
+    model->member[indexMemberAffected].face[indexFaceAffected].point[2].coordFileTexture.x = areaTexSelected[0].x / model->tex.wMax;
+    model->member[indexMemberAffected].face[indexFaceAffected].point[2].coordFileTexture.y = (model->tex.hMax - areaTexSelected[0].y) / model->tex.hMax;
+    model->member[indexMemberAffected].face[indexFaceAffected].point[3].coordFileTexture.x = areaTexSelected[0].x / model->tex.wMax;
+    model->member[indexMemberAffected].face[indexFaceAffected].point[3].coordFileTexture.y = (model->tex.hMax - areaTexSelected[1].y) / model->tex.hMax;
 
     model->member[indexMemberAffected].face[indexFaceAffected].color.r = 255;
     model->member[indexMemberAffected].face[indexFaceAffected].color.v = 255;

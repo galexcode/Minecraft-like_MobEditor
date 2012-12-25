@@ -1,7 +1,7 @@
 #ifndef EDITOR
 #define EDITOR
 
-    int editor();
+    int editor(char *mainPath, char *pathModel);
     int addCube(Model *model);
     int initCube(Cube *cube);
     void moveCamera(Point3D *pos, double angleX, double angleY, double *zoom);

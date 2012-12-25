@@ -1,6 +1,6 @@
 #include "constants.h"
-#include "button.h"
 #include "text.h"
+#include "button.h"
 #include "input.h"
 
 extern Input event;

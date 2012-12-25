@@ -15,22 +15,11 @@ int initModel(Model *model)
     return 1;
 }
 
-int createModel(char *path, Model *model)
+int createModel(char *mainPath, char *path, Model *model)
 {
-    char buff[SIZE_PATH_MAX] = "models/";
     FILE *file = NULL;
 
     initModel(model);
-
-    if(strstr(path, buff) == NULL)
-    {
-        strcat(buff, path);
-        strcpy(path, buff);
-    }
-    if(strstr(path, ".mclmdl") == NULL)
-    {
-        strcat(path, ".mclmdl");
-    }
 
     file = fopen(path, "r");
 
@@ -45,7 +34,7 @@ int createModel(char *path, Model *model)
     }
     else
     {
-        loadModel(path, model);
+        loadModel(mainPath, path, model);
     }
 
     fclose(file);
@@ -53,7 +42,7 @@ int createModel(char *path, Model *model)
     return 1;
 }
 
-int loadModel(char *path, Model *model)
+int loadModel(char *mainPath, char *path, Model *model)
 {
     FILE *file = fopen(path, "r");
     int i, j, k;
@@ -75,7 +64,7 @@ int loadModel(char *path, Model *model)
 
     if(model->tex.path[0] != 0 && strcmp(model->tex.path, "NOTHING") != 0)
     {
-        openTexture(model);
+        openTexture(mainPath, model);
     }
     if(model->nbMembers != 0)
     {
@@ -112,19 +101,8 @@ int loadModel(char *path, Model *model)
 
 int saveModel(char *path, Model *model)
 {
-    char buff[SIZE_PATH_MAX] = "models/";
     FILE *file = NULL;
     int i, j, k;
-
-    if(strstr(path, buff) == NULL)
-    {
-        strcat(buff, path);
-        strcpy(path, buff);
-    }
-    if(strstr(path, ".mclmdl") == NULL)
-    {
-        strcat(path, ".mclmdl");
-    }
 
     file = fopen(path, "w+");
 
@@ -209,17 +187,19 @@ int renderModel(Model *model, int mode)
     return 1;
 }
 
-int openTexture(Model *model)
+int openTexture(char *mainPath, Model *model)
 {
-    char buff[SIZE_PATH_MAX] = "textures/";
+    char buff[SIZE_PATH_MAX] = "";
+    char buff2[SIZE_PATH_MAX] = "";
 
-    if(strstr(model->tex.path, buff) == NULL)
-    {
-        strcat(buff, model->tex.path);
-        strcpy(model->tex.path, buff);
-    }
+    sprintf(buff, "%s", mainPath);
 
+    strcat(buff, model->tex.path);
+
+    strcpy(buff2, model->tex.path);
+    strcpy(model->tex.path, buff);
     loadTexture(&model->tex);
+    strcpy(model->tex.path, buff2);
 
     model->tex.posTex[0].x = 0;
     model->tex.posTex[0].y = 1;

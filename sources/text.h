@@ -1,5 +1,5 @@
-#ifndef TEXT
-#define TEXT
+#ifndef TEXT_H
+#define TEXT_H
 
     void loadWeightLetters(char *path, int *weightLetter);
     void writeText(Texture *texture, Text text, int *weightLetter, int x, int y);
