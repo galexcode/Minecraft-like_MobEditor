@@ -9,7 +9,6 @@
         int xrel,yrel;
         char mouse[8];
         char leave;
-
     } Input;
 
     void updateEvents(Input* in);

@@ -3,13 +3,13 @@
 #include "model.h"
 #include "editor.h"
 
+int windowWidth = 1200;
+int windowHeight = 650;
+
 Input event;
 SDL_Surface *window = NULL;
 
-int initSDL(char *windowTitle);
 int deleteExeNameFromPath(char *path);
-int quitSDL();
-int initOpenGL();
 
 int main(int argc, char *argv[])
 {
@@ -53,7 +53,7 @@ int main(int argc, char *argv[])
 int initSDL(char *windowTitle)
 {
     SDL_Init(SDL_INIT_VIDEO);
-    window = SDL_SetVideoMode(WINDOW_WEIGHT, WINDOW_HEIGHT, 32, SDL_OPENGL | SDL_DOUBLEBUF);
+    window = SDL_SetVideoMode(windowWidth, windowHeight, 32, SDL_OPENGL | SDL_DOUBLEBUF);
 
     if(window == NULL)
     {

@@ -1,6 +1,9 @@
 #include "constants.h"
 #include "render.h"
 
+extern int windowWidth;
+extern int windowHeight;
+
 void lookAt(Point3D *position, Point3D *target)
 {
     gluLookAt(position->x, position->y, position->z, target->x, target->y, target->z, 0, 1, 0);
@@ -51,7 +54,7 @@ void modeRender(int modeScene, Point3D *pos, Point3D *target, int FOV)
         glMatrixMode(GL_PROJECTION);
         glLoadIdentity();
 
-        gluPerspective(FOV, (double)WINDOW_WEIGHT/WINDOW_HEIGHT, 0.01, 1000);
+        gluPerspective(FOV, (double)windowWidth/windowHeight, 0.01, 1000);
 
         glMatrixMode(GL_MODELVIEW);
         glLoadIdentity();
@@ -63,7 +66,7 @@ void modeRender(int modeScene, Point3D *pos, Point3D *target, int FOV)
         glMatrixMode(GL_PROJECTION);
         glLoadIdentity();
 
-        glOrtho(0, WINDOW_WEIGHT, 0, WINDOW_HEIGHT, 0, 10000);
+        glOrtho(0, windowWidth, 0, windowHeight, 0, 10000);
 
         glMatrixMode(GL_MODELVIEW);
         glLoadIdentity();
@@ -81,13 +84,13 @@ void drawTexture(Texture *tex)
     Point2D position[4];
 
     position[0].x = tex->pos.x;
-    position[0].y = WINDOW_HEIGHT - tex->pos.y;
+    position[0].y = windowHeight - tex->pos.y;
     position[1].x = tex->pos.x + tex->weight;
-    position[1].y = WINDOW_HEIGHT - tex->pos.y;
+    position[1].y = windowHeight - tex->pos.y;
     position[2].x = tex->pos.x + tex->weight;
-    position[2].y = WINDOW_HEIGHT - (tex->pos.y + tex->height);
+    position[2].y = windowHeight - (tex->pos.y + tex->height);
     position[3].x = tex->pos.x;
-    position[3].y = WINDOW_HEIGHT -(tex->pos.y + tex->height);
+    position[3].y = windowHeight -(tex->pos.y + tex->height);
 
     glColor3ub(tex->color.r, tex->color.v, tex->color.b);
 

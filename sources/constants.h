@@ -17,8 +17,6 @@
     #include <string.h>
     #include <errno.h>
 
-    #define WINDOW_WEIGHT 1200
-    #define WINDOW_HEIGHT 650
     #define MEMBERS_MAX 100
     #define NUMBER_BUTTONS_EDITOR 6
     #define SIZE_PATH_MAX 512
@@ -31,6 +29,10 @@
     enum{GET_MODEL_PATH, GET_TEXTURE_PATH};
     enum{X_AXIS, Y_AXIS, Z_AXIS};
     enum{MODELS, TEXTURES};
+
+    int quitSDL();
+    int initOpenGL();
+    int initSDL(char *windowTitle);
 
     ///Structures
 
@@ -106,8 +108,8 @@
     {
         int nbMembers;
         int init;
-        Cube *member;
-        Point3D *translation;
+        Cube *member[MEMBERS_MAX];
+        Point3D *translation[MEMBERS_MAX];
         Texture tex;
         int saved;
     };

@@ -3,11 +3,12 @@
 #include "render.h"
 #include "sdlglutils.h"
 
+extern int windowWidth;
+extern int windowHeight;
+
 int initModel(Model *model)
 {
     model->nbMembers = 0;
-    model->member = NULL;
-    model->translation = NULL;
     model->tex.IDtex = 0;
     model->init = 1;
     model->saved = 0;
@@ -68,27 +69,30 @@ int loadModel(char *mainPath, char *path, Model *model)
     }
     if(model->nbMembers != 0)
     {
-        model->member = malloc(model->nbMembers * sizeof(Cube));
-        model->translation = malloc(model->nbMembers * sizeof(Point3D));
-
-        if(model->member == NULL || model->translation == NULL)
+        for(i = 0; i < model->nbMembers; i++)
         {
-            printf("Error allocating memory\n");
-            return 0;
+            model->member[i] = malloc(sizeof(Cube));
+            model->translation[i] = malloc(sizeof(Point3D));
+
+            if(model->member[i] == NULL || model->translation[i] == NULL)
+            {
+                printf("Error allocating memory\n");
+                return 0;
+            }
         }
 
         for(i = 0; i < model->nbMembers; i++)
         {
             fscanf(file, "Member %d\n", &i);
-            fscanf(file, "Translation : %f %f %f\n", &model->translation[i].x, &model->translation[i].y, &model->translation[i].z);
+            fscanf(file, "Translation : %f %f %f\n", &model->translation[i]->x, &model->translation[i]->y, &model->translation[i]->z);
             for(j = 0; j < 6; j++)
             {
                 fscanf(file, "face %d :\n", &j);
-                fscanf(file, "c %lf %lf %lf\n\n", &model->member[i].face[j].color.r, &model->member[i].face[j].color.v, &model->member[i].face[j].color.b);
+                fscanf(file, "c %lf %lf %lf\n\n", &model->member[i]->face[j].color.r, &model->member[i]->face[j].color.v, &model->member[i]->face[j].color.b);
                 for(k = 0; k < 4; k++)
                 {
-                    fscanf(file, "v %f, %f, %f\n", &model->member[i].face[j].point[k].x, &model->member[i].face[j].point[k].y, &model->member[i].face[j].point[k].z);
-                    fscanf(file, "t %lf %lf\n", &model->member[i].face[j].point[k].coordFileTexture.x, &model->member[i].face[j].point[k].coordFileTexture.y);
+                    fscanf(file, "v %f, %f, %f\n", &model->member[i]->face[j].point[k].x, &model->member[i]->face[j].point[k].y, &model->member[i]->face[j].point[k].z);
+                    fscanf(file, "t %lf %lf\n", &model->member[i]->face[j].point[k].coordFileTexture.x, &model->member[i]->face[j].point[k].coordFileTexture.y);
                 }
             }
         }
@@ -122,15 +126,15 @@ int saveModel(char *path, Model *model)
     for(i = 0; i < model->nbMembers; i++)
     {
         fprintf(file, "Member %d\n", i);
-        fprintf(file, "Translation : %f %f %f\n", model->translation[i].x, model->translation[i].y, model->translation[i].z);
+        fprintf(file, "Translation : %f %f %f\n", model->translation[i]->x, model->translation[i]->y, model->translation[i]->z);
         for(j = 0; j < 6; j++)
         {
             fprintf(file, "face %d :\n", j);
-            fprintf(file, "c %lf %lf %lf\n\n", model->member[i].face[j].color.r, model->member[i].face[j].color.v, model->member[i].face[j].color.b);
+            fprintf(file, "c %lf %lf %lf\n\n", model->member[i]->face[j].color.r, model->member[i]->face[j].color.v, model->member[i]->face[j].color.b);
             for(k = 0; k < 4; k++)
             {
-                fprintf(file, "v %f, %f, %f\n", model->member[i].face[j].point[k].x, model->member[i].face[j].point[k].y, model->member[i].face[j].point[k].z);
-                fprintf(file, "t %lf %lf\n", model->member[i].face[j].point[k].coordFileTexture.x, model->member[i].face[j].point[k].coordFileTexture.y);
+                fprintf(file, "v %f, %f, %f\n", model->member[i]->face[j].point[k].x, model->member[i]->face[j].point[k].y, model->member[i]->face[j].point[k].z);
+                fprintf(file, "t %lf %lf\n", model->member[i]->face[j].point[k].coordFileTexture.x, model->member[i]->face[j].point[k].coordFileTexture.y);
             }
         }
     }
@@ -142,8 +146,13 @@ int saveModel(char *path, Model *model)
 
 int freeModel(Model *model)
 {
-    free(model->member);
-    free(model->translation);
+    int i;
+
+    for(i = 0; i < model->nbMembers; i++)
+    {
+        free(model->member[i]);
+        free(model->translation[i]);
+    }
 
     model->nbMembers = 0;
     model->tex.IDtex = 0;
@@ -162,21 +171,21 @@ int renderModel(Model *model, int mode)
     for(i = 0; i < model->nbMembers; i++)
     {
         glPushMatrix();
-        glTranslated(model->translation[i].x, model->translation[i].y, model->translation[i].z);
+        glTranslated(model->translation[i]->x, model->translation[i]->y, model->translation[i]->z);
 
         for(j = 0; j < 6; j++)
         {
             if(mode == RENDER_MODE)
             {
                 glEnable(GL_BLEND);
-                glColor3ub(model->member[i].face[j].color.r, model->member[i].face[j].color.v, model->member[i].face[j].color.b);
+                glColor3ub(model->member[i]->face[j].color.r, model->member[i]->face[j].color.v, model->member[i]->face[j].color.b);
             }
             else if(mode == COLLISION_MODE)
             {
                 glColor3ub(i + 10, j + 10, j + 10);//To find indexes in the collision with glReadPixels();
             }
 
-            drawFace(&model->member[i].face[j], mode);
+            drawFace(&model->member[i]->face[j], mode);
             glDisable(GL_BLEND);
         }
         glPopMatrix();
@@ -210,8 +219,8 @@ int openTexture(char *mainPath, Model *model)
     model->tex.color.b = 255;
     model->tex.height = model->tex.hMax;
     model->tex.weight = model->tex.wMax;
-    model->tex.pos.x = WINDOW_WEIGHT - model->tex.weight - 10;
-    model->tex.pos.y = (WINDOW_HEIGHT - model->tex.height) / 2;
+    model->tex.pos.x = windowWidth - model->tex.weight - 10;
+    model->tex.pos.y = (windowHeight - model->tex.height) / 2;
 
     return 1;
 }

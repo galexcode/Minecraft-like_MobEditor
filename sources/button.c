@@ -4,6 +4,8 @@
 #include "input.h"
 
 extern Input event;
+extern int windowWidth;
+extern int windowHeight;
 
 int initButton(Button *button, Texture *tex)
 {
@@ -47,13 +49,13 @@ int renderButton(Button *button, Texture *textureText, int *weightLetter, Text *
     Point2D posText;
 
     position[0].x = button->pos.x;
-    position[0].y = WINDOW_HEIGHT - button->pos.y;
+    position[0].y = windowHeight - button->pos.y;
     position[1].x = button->pos.x + button->weight;
-    position[1].y = WINDOW_HEIGHT - button->pos.y;
+    position[1].y = windowHeight - button->pos.y;
     position[2].x = button->pos.x + button->weight;
-    position[2].y = WINDOW_HEIGHT -(button->pos.y + button->height);
+    position[2].y = windowHeight -(button->pos.y + button->height);
     position[3].x = button->pos.x;
-    position[3].y = WINDOW_HEIGHT -(button->pos.y + button->height);
+    position[3].y = windowHeight -(button->pos.y + button->height);
 
     if(button->textInput == 0)
     {
@@ -181,24 +183,24 @@ void attribButtons(Button *button, Texture *texButton)
     button[2].height = 40;
     button[2].weight = 150;
     button[2].pos.x = 10;
-    button[2].pos.y = WINDOW_HEIGHT - button[2].height - 10;
+    button[2].pos.y = windowHeight - button[2].height - 10;
     addStringToText(&button[2].text, "Save Model");
 
     button[3].height = 40;
     button[3].weight = 170;
     button[3].pos.x = 170;
-    button[3].pos.y = WINDOW_HEIGHT - button[3].height - 10;
+    button[3].pos.y = windowHeight - button[3].height - 10;
     addStringToText(&button[3].text, "Open new model");
 
     button[4].height = 40;
     button[4].weight = 170;
-    button[4].pos.x = WINDOW_WEIGHT - button[4].weight - 10;
+    button[4].pos.x = windowWidth - button[4].weight - 10;
     button[4].pos.y = 10;
     addStringToText(&button[4].text, "Apply a texture");
 
     button[5].height = 40;
     button[5].weight = 200;
-    button[5].pos.x = WINDOW_WEIGHT - button[5].weight - 10;
-    button[5].pos.y = WINDOW_HEIGHT - button[5].height - 10;
+    button[5].pos.x = windowWidth - button[5].weight - 10;
+    button[5].pos.y = windowHeight - button[5].height - 10;
     addStringToText(&button[5].text, "Invert Texture : X");
 }

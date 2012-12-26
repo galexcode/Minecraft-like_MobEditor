@@ -9,6 +9,8 @@
 #include "tools.h"
 
 extern Input event;
+extern int windowWidth;
+extern int windowHeight;
 
 int editor(char *mainPath, char *pathModel)
 {
@@ -63,9 +65,9 @@ int editor(char *mainPath, char *pathModel)
     textureEditor.color.r = 255;
     textureEditor.color.v = 255;
     textureEditor.color.b = 255;
-    textureEditor.height = WINDOW_HEIGHT;
+    textureEditor.height = windowHeight;
     textureEditor.weight = textureEditor.wMax;
-    textureEditor.pos.x = WINDOW_WEIGHT - textureEditor.weight - 1;
+    textureEditor.pos.x = windowWidth - textureEditor.weight - 1;
     textureEditor.pos.y = 0;
 
     selectionTexture.point[0].z = 0;
@@ -277,9 +279,9 @@ int editor(char *mainPath, char *pathModel)
             areaTexSelected[1].x = (int)areaTexSelected[1].x;
             areaTexSelected[1].y = (int)areaTexSelected[1].y;
             selectionTexture.point[0].x = areaTexSelected[0].x / model.tex.wMax * model.tex.weight + model.tex.pos.x;
-            selectionTexture.point[0].y = WINDOW_HEIGHT - (areaTexSelected[0].y / model.tex.hMax * model.tex.height + model.tex.pos.y);
+            selectionTexture.point[0].y = windowHeight - (areaTexSelected[0].y / model.tex.hMax * model.tex.height + model.tex.pos.y);
             selectionTexture.point[1].x = areaTexSelected[1].x / model.tex.wMax * model.tex.weight + model.tex.pos.x;
-            selectionTexture.point[1].y = WINDOW_HEIGHT - (areaTexSelected[1].y / model.tex.hMax * model.tex.height + model.tex.pos.y);
+            selectionTexture.point[1].y = windowHeight - (areaTexSelected[1].y / model.tex.hMax * model.tex.height + model.tex.pos.y);
         }
 
         actualTicks = SDL_GetTicks();
@@ -303,17 +305,17 @@ int editor(char *mainPath, char *pathModel)
             }
             if(indexMemberAffected >= 0 && indexMemberAffected < model.nbMembers && indexFaceAffected >= 0 && indexFaceAffected < 6 && selection == FACE_SELECTION)
             {
-                model.member[indexMemberAffected].face[indexFaceAffected].color.r = 241;
-                model.member[indexMemberAffected].face[indexFaceAffected].color.v = 248;
-                model.member[indexMemberAffected].face[indexFaceAffected].color.b = 12;
+                model.member[indexMemberAffected]->face[indexFaceAffected].color.r = 241;
+                model.member[indexMemberAffected]->face[indexFaceAffected].color.v = 248;
+                model.member[indexMemberAffected]->face[indexFaceAffected].color.b = 12;
             }
             else if(indexMemberAffected >= 0 && indexMemberAffected < model.nbMembers && indexFaceAffected >= 0 && indexFaceAffected < 6 && selection == CUBE_SELECTION)
             {
                 for(i = 0; i < 6; i++)
                 {
-                    model.member[indexMemberAffected].face[i].color.r = 100 + i * 20;
-                    model.member[indexMemberAffected].face[i].color.v = 100 + i * 20;
-                    model.member[indexMemberAffected].face[i].color.b = 100 + i * 20;
+                    model.member[indexMemberAffected]->face[i].color.r = 100 + i * 20;
+                    model.member[indexMemberAffected]->face[i].color.v = 100 + i * 20;
+                    model.member[indexMemberAffected]->face[i].color.b = 100 + i * 20;
                 }
             }
 
@@ -331,26 +333,26 @@ int editor(char *mainPath, char *pathModel)
             refreshScene();
             if(indexMemberAffected >= 0 && indexMemberAffected < model.nbMembers && indexFaceAffected >= 0 && indexFaceAffected < 6 && selection == FACE_SELECTION)
             {
-                if(model.member[indexMemberAffected].face[indexFaceAffected].point[0].coordFileTexture.x == -1)
+                if(model.member[indexMemberAffected]->face[indexFaceAffected].point[0].coordFileTexture.x == -1)
                 {
-                    model.member[indexMemberAffected].face[indexFaceAffected].color.r = indexFaceAffected * 20 + 50;
-                    model.member[indexMemberAffected].face[indexFaceAffected].color.v = indexFaceAffected * 20 + 50;
-                    model.member[indexMemberAffected].face[indexFaceAffected].color.b = indexFaceAffected * 20 + 50;
+                    model.member[indexMemberAffected]->face[indexFaceAffected].color.r = indexFaceAffected * 20 + 50;
+                    model.member[indexMemberAffected]->face[indexFaceAffected].color.v = indexFaceAffected * 20 + 50;
+                    model.member[indexMemberAffected]->face[indexFaceAffected].color.b = indexFaceAffected * 20 + 50;
                 }
                 else
                 {
-                    model.member[indexMemberAffected].face[indexFaceAffected].color.r = 255;
-                    model.member[indexMemberAffected].face[indexFaceAffected].color.v = 255;
-                    model.member[indexMemberAffected].face[indexFaceAffected].color.b = 255;
+                    model.member[indexMemberAffected]->face[indexFaceAffected].color.r = 255;
+                    model.member[indexMemberAffected]->face[indexFaceAffected].color.v = 255;
+                    model.member[indexMemberAffected]->face[indexFaceAffected].color.b = 255;
                 }
             }
             else if(indexMemberAffected >= 0 && indexMemberAffected < model.nbMembers && indexFaceAffected >= 0 && indexFaceAffected < 6 && selection == CUBE_SELECTION)
             {
                 for(i = 0; i < 6; i++)
                 {
-                    model.member[indexMemberAffected].face[i].color.r = i * 20 + 50;
-                    model.member[indexMemberAffected].face[i].color.v = i * 20 + 50;
-                    model.member[indexMemberAffected].face[i].color.b = i * 20 + 50;
+                    model.member[indexMemberAffected]->face[i].color.r = i * 20 + 50;
+                    model.member[indexMemberAffected]->face[i].color.v = i * 20 + 50;
+                    model.member[indexMemberAffected]->face[i].color.b = i * 20 + 50;
                 }
             }
 
@@ -381,116 +383,36 @@ int editor(char *mainPath, char *pathModel)
 
 int addCube(Model *model)
 {
-    Model tmp;
-    int i;
-
-    if(model->nbMembers > 0)
+    if(model->nbMembers < MEMBERS_MAX)
     {
-        initModel(&tmp);
-
-        tmp.nbMembers = model->nbMembers;
-        tmp.member = malloc(tmp.nbMembers * sizeof(Cube));
-        tmp.translation = malloc(tmp.nbMembers * sizeof(Point3D));
-
-        if(tmp.member == NULL || tmp.translation == NULL)
+        model->member[model->nbMembers] = malloc(sizeof(Cube));
+        model->translation[model->nbMembers] = malloc(sizeof(Point3D));
+        if(model->member[model->nbMembers] == NULL)
         {
-            printf("Error allocating memory 1\n");
-            return 0;
+            printf("Error allocating memory\n");
         }
-
-        for(i = 0; i < tmp.nbMembers; i++)
-        {
-            tmp.member[i] = model->member[i];
-            tmp.translation[i] = model->translation[i];
-        }
-
-        model->nbMembers = tmp.nbMembers + 1;
-        model->member = realloc(model->member, model->nbMembers * sizeof(Cube));
-        model->translation = realloc(model->translation, model->nbMembers * sizeof(Point3D));
-
-        if(model->member == NULL)
-        {
-            printf("Error allocating memory 2 (member)\n");
-            printf("errno = %d\n", errno);
-            return 0;
-        }
-        if(model->translation == NULL)
-        {
-            printf("Error allocating memory 2 (translation)\n");
-            return 0;
-        }
-
-        for(i = 0; i < tmp.nbMembers; i++)
-        {
-            model->member[i] = tmp.member[i];
-            model->translation[i] = tmp.translation[i];
-        }
-
-        freeModel(&tmp);
-    }
-
-    else
-    {
         model->nbMembers++;
-        model->member = malloc(model->nbMembers * sizeof(Cube));
-        model->translation = malloc(model->nbMembers * sizeof(Point3D));
+        initCube(model->member[model->nbMembers - 1]);
+        model->translation[model->nbMembers - 1]->x = 0;
+        model->translation[model->nbMembers - 1]->y = 0;
+        model->translation[model->nbMembers - 1]->z = 0;
     }
-
-    model->translation[model->nbMembers - 1].x = 0;
-    model->translation[model->nbMembers - 1].y = 0;
-    model->translation[model->nbMembers - 1].z = 0;
-    initCube(&model->member[model->nbMembers - 1]);
-
     return 1;
 }
 
 int removeCube(Model *model, int *indexMemberAffected)
 {
-    Model tmp;
     int i;
 
-    initModel(&tmp);
-
-    tmp.nbMembers = model->nbMembers;
-    tmp.member = malloc(tmp.nbMembers * sizeof(Cube));
-    tmp.translation = malloc(tmp.nbMembers * sizeof(Point3D));
-
-    if(tmp.member == NULL || tmp.translation == NULL)
+    for(i = (*indexMemberAffected); i < model->nbMembers - 1; i++)
     {
-        printf("Error allocating memory\n");
-        return 0;
+        model->member[i] = model->member[i + 1];
+        model->translation[i] = model->translation[i + 1];
     }
 
-    tmp = (*model);
-    freeModel(model);
-
-    initModel(model);
-    model->nbMembers = tmp.nbMembers - 1;
-    model->member = malloc(model->nbMembers * sizeof(Cube));
-    model->translation = malloc(model->nbMembers * sizeof(Point3D));
-
-    if(model->member == NULL || model->translation == NULL)
-    {
-        printf("Error allocating memory\n");
-        freeModel(model);
-        freeModel(&tmp);
-        return 0;
-    }
-
-    for(i = 0; i < (*indexMemberAffected); i++)
-    {
-        model->member[i] = tmp.member[i];
-        model->translation[i] = tmp.translation[i];
-    }
-    for(i = (*indexMemberAffected); i < model->nbMembers; i++)
-    {
-        model->member[i] = tmp.member[i + 1];
-        model->translation[i] = tmp.translation[i + 1];
-    }
-
-    freeModel(&tmp);
-
-    (*indexMemberAffected) = -1;
+    free(model->member[model->nbMembers - 1]);
+    free(model->translation[model->nbMembers - 1]);
+    model->nbMembers--;
 
     return 1;
 }
@@ -572,7 +494,7 @@ void collisionCursorModel(Model *model, int *indexMemberAffected, int *indexFace
 {
     GLubyte pixel[3];
 
-    glReadPixels(event.posX, WINDOW_HEIGHT - event.posY, 1, 1, GL_RGB, GL_UNSIGNED_BYTE, pixel);
+    glReadPixels(event.posX, windowHeight - event.posY, 1, 1, GL_RGB, GL_UNSIGNED_BYTE, pixel);
 
     if(pixel[0] != 0)
     {
@@ -593,11 +515,11 @@ double resizeCube(Model *model, int indexMemberAffected, int indexFaceAffected, 
     double dimensionResized = 0;
     Point3D tmp;
 
-    if(model->member[indexMemberAffected].face[indexFaceAffected].point[0].x == model->member[indexMemberAffected].face[indexFaceAffected].point[2].x)
+    if(model->member[indexMemberAffected]->face[indexFaceAffected].point[0].x == model->member[indexMemberAffected]->face[indexFaceAffected].point[2].x)
         coordResized = X;
-    else if(model->member[indexMemberAffected].face[indexFaceAffected].point[0].y == model->member[indexMemberAffected].face[indexFaceAffected].point[2].y)
+    else if(model->member[indexMemberAffected]->face[indexFaceAffected].point[0].y == model->member[indexMemberAffected]->face[indexFaceAffected].point[2].y)
         coordResized = Y;
-    else if(model->member[indexMemberAffected].face[indexFaceAffected].point[0].z == model->member[indexMemberAffected].face[indexFaceAffected].point[2].z)
+    else if(model->member[indexMemberAffected]->face[indexFaceAffected].point[0].z == model->member[indexMemberAffected]->face[indexFaceAffected].point[2].z)
         coordResized = Z;
 
     switch(coordResized)
@@ -607,11 +529,11 @@ double resizeCube(Model *model, int indexMemberAffected, int indexFaceAffected, 
             {
                 if(selected)
                 {
-                    tmp = model->member[indexMemberAffected].face[indexFaceAffected].point[i];
-                    model->member[indexMemberAffected].face[indexFaceAffected].point[i].x += event.xrel * 0.005;
+                    tmp = model->member[indexMemberAffected]->face[indexFaceAffected].point[i];
+                    model->member[indexMemberAffected]->face[indexFaceAffected].point[i].x += event.xrel * 0.005;
                 }
 
-                dimensionResized = model->member[indexMemberAffected].face[indexFaceAffected].point[i].x - model->member[indexMemberAffected].face[(indexFaceAffected + 2) % 4].point[i].x;
+                dimensionResized = model->member[indexMemberAffected]->face[indexFaceAffected].point[i].x - model->member[indexMemberAffected]->face[(indexFaceAffected + 2) % 4].point[i].x;
 
                 if(dimensionResized < 0)
                     dimensionResized *= -1;
@@ -622,11 +544,11 @@ double resizeCube(Model *model, int indexMemberAffected, int indexFaceAffected, 
                     {
                         for(k = 0; k < 4; k++)
                         {
-                            if(model->member[indexMemberAffected].face[j].point[k].x == tmp.x && model->member[indexMemberAffected].face[j].point[k].y == tmp.y && model->member[indexMemberAffected].face[j].point[k].z == tmp.z)
+                            if(model->member[indexMemberAffected]->face[j].point[k].x == tmp.x && model->member[indexMemberAffected]->face[j].point[k].y == tmp.y && model->member[indexMemberAffected]->face[j].point[k].z == tmp.z)
                             {
-                               model->member[indexMemberAffected].face[j].point[k].x = model->member[indexMemberAffected].face[indexFaceAffected].point[i].x;
-                               model->member[indexMemberAffected].face[j].point[k].y = model->member[indexMemberAffected].face[indexFaceAffected].point[i].y;
-                               model->member[indexMemberAffected].face[j].point[k].z = model->member[indexMemberAffected].face[indexFaceAffected].point[i].z;
+                               model->member[indexMemberAffected]->face[j].point[k].x = model->member[indexMemberAffected]->face[indexFaceAffected].point[i].x;
+                               model->member[indexMemberAffected]->face[j].point[k].y = model->member[indexMemberAffected]->face[indexFaceAffected].point[i].y;
+                               model->member[indexMemberAffected]->face[j].point[k].z = model->member[indexMemberAffected]->face[indexFaceAffected].point[i].z;
                             }
                         }
                     }
@@ -638,10 +560,10 @@ double resizeCube(Model *model, int indexMemberAffected, int indexFaceAffected, 
             {
                 if(selected)
                 {
-                    tmp = model->member[indexMemberAffected].face[indexFaceAffected].point[i];
-                    model->member[indexMemberAffected].face[indexFaceAffected].point[i].y -= event.yrel * 0.005;
+                    tmp = model->member[indexMemberAffected]->face[indexFaceAffected].point[i];
+                    model->member[indexMemberAffected]->face[indexFaceAffected].point[i].y -= event.yrel * 0.005;
                 }
-                dimensionResized = model->member[indexMemberAffected].face[4].point[i].y - model->member[indexMemberAffected].face[5].point[i].y;
+                dimensionResized = model->member[indexMemberAffected]->face[4].point[i].y - model->member[indexMemberAffected]->face[5].point[i].y;
 
                 if(dimensionResized < 0)
                     dimensionResized *= -1;
@@ -652,11 +574,11 @@ double resizeCube(Model *model, int indexMemberAffected, int indexFaceAffected, 
                     {
                         for(k = 0; k < 4; k++)
                         {
-                            if(model->member[indexMemberAffected].face[j].point[k].x == tmp.x && model->member[indexMemberAffected].face[j].point[k].y == tmp.y && model->member[indexMemberAffected].face[j].point[k].z == tmp.z)
+                            if(model->member[indexMemberAffected]->face[j].point[k].x == tmp.x && model->member[indexMemberAffected]->face[j].point[k].y == tmp.y && model->member[indexMemberAffected]->face[j].point[k].z == tmp.z)
                             {
-                               model->member[indexMemberAffected].face[j].point[k].x = model->member[indexMemberAffected].face[indexFaceAffected].point[i].x;
-                               model->member[indexMemberAffected].face[j].point[k].y = model->member[indexMemberAffected].face[indexFaceAffected].point[i].y;
-                               model->member[indexMemberAffected].face[j].point[k].z = model->member[indexMemberAffected].face[indexFaceAffected].point[i].z;
+                               model->member[indexMemberAffected]->face[j].point[k].x = model->member[indexMemberAffected]->face[indexFaceAffected].point[i].x;
+                               model->member[indexMemberAffected]->face[j].point[k].y = model->member[indexMemberAffected]->face[indexFaceAffected].point[i].y;
+                               model->member[indexMemberAffected]->face[j].point[k].z = model->member[indexMemberAffected]->face[indexFaceAffected].point[i].z;
                             }
                         }
                     }
@@ -668,10 +590,10 @@ double resizeCube(Model *model, int indexMemberAffected, int indexFaceAffected, 
             {
                 if(selected)
                 {
-                    tmp = model->member[indexMemberAffected].face[indexFaceAffected].point[i];
-                    model->member[indexMemberAffected].face[indexFaceAffected].point[i].z += event.xrel * 0.005;
+                    tmp = model->member[indexMemberAffected]->face[indexFaceAffected].point[i];
+                    model->member[indexMemberAffected]->face[indexFaceAffected].point[i].z += event.xrel * 0.005;
                 }
-                dimensionResized = model->member[indexMemberAffected].face[indexFaceAffected].point[i].z - model->member[indexMemberAffected].face[(indexFaceAffected + 2) % 4].point[i].z;
+                dimensionResized = model->member[indexMemberAffected]->face[indexFaceAffected].point[i].z - model->member[indexMemberAffected]->face[(indexFaceAffected + 2) % 4].point[i].z;
 
                 if(dimensionResized < 0)
                     dimensionResized *= -1;
@@ -682,11 +604,11 @@ double resizeCube(Model *model, int indexMemberAffected, int indexFaceAffected, 
                     {
                         for(k = 0; k < 4; k++)
                         {
-                            if(model->member[indexMemberAffected].face[j].point[k].x == tmp.x && model->member[indexMemberAffected].face[j].point[k].y == tmp.y && model->member[indexMemberAffected].face[j].point[k].z == tmp.z)
+                            if(model->member[indexMemberAffected]->face[j].point[k].x == tmp.x && model->member[indexMemberAffected]->face[j].point[k].y == tmp.y && model->member[indexMemberAffected]->face[j].point[k].z == tmp.z)
                             {
-                               model->member[indexMemberAffected].face[j].point[k].x = model->member[indexMemberAffected].face[indexFaceAffected].point[i].x;
-                               model->member[indexMemberAffected].face[j].point[k].y = model->member[indexMemberAffected].face[indexFaceAffected].point[i].y;
-                               model->member[indexMemberAffected].face[j].point[k].z = model->member[indexMemberAffected].face[indexFaceAffected].point[i].z;
+                               model->member[indexMemberAffected]->face[j].point[k].x = model->member[indexMemberAffected]->face[indexFaceAffected].point[i].x;
+                               model->member[indexMemberAffected]->face[j].point[k].y = model->member[indexMemberAffected]->face[indexFaceAffected].point[i].y;
+                               model->member[indexMemberAffected]->face[j].point[k].z = model->member[indexMemberAffected]->face[indexFaceAffected].point[i].z;
                             }
                         }
                     }
@@ -721,7 +643,7 @@ void renderMenuEditor(Model *model, Button *button, Texture *textureText, int *w
     glVertex2d(selectionTexture->point[0].x, selectionTexture->point[1].y);
     glEnd();
 
-    writeText(textureText, *textDimensionResized, weightLetter, textureEditor->pos.x - 100, WINDOW_HEIGHT - 20);
+    writeText(textureText, *textDimensionResized, weightLetter, textureEditor->pos.x - 100, windowHeight - 20);
 
     glPopMatrix();
 }
@@ -824,18 +746,18 @@ int collisionCursorTexture(Texture *tex)
 
 int putTextureOnModel(Model *model, int indexMemberAffected, int indexFaceAffected, Point2D areaTexSelected[2])
 {
-    model->member[indexMemberAffected].face[indexFaceAffected].point[0].coordFileTexture.x = areaTexSelected[1].x / model->tex.wMax;
-    model->member[indexMemberAffected].face[indexFaceAffected].point[0].coordFileTexture.y = (model->tex.hMax - areaTexSelected[1].y) / model->tex.hMax;
-    model->member[indexMemberAffected].face[indexFaceAffected].point[1].coordFileTexture.x = areaTexSelected[1].x / model->tex.wMax;
-    model->member[indexMemberAffected].face[indexFaceAffected].point[1].coordFileTexture.y = (model->tex.hMax - areaTexSelected[0].y) / model->tex.hMax;
-    model->member[indexMemberAffected].face[indexFaceAffected].point[2].coordFileTexture.x = areaTexSelected[0].x / model->tex.wMax;
-    model->member[indexMemberAffected].face[indexFaceAffected].point[2].coordFileTexture.y = (model->tex.hMax - areaTexSelected[0].y) / model->tex.hMax;
-    model->member[indexMemberAffected].face[indexFaceAffected].point[3].coordFileTexture.x = areaTexSelected[0].x / model->tex.wMax;
-    model->member[indexMemberAffected].face[indexFaceAffected].point[3].coordFileTexture.y = (model->tex.hMax - areaTexSelected[1].y) / model->tex.hMax;
+    model->member[indexMemberAffected]->face[indexFaceAffected].point[0].coordFileTexture.x = areaTexSelected[1].x / model->tex.wMax;
+    model->member[indexMemberAffected]->face[indexFaceAffected].point[0].coordFileTexture.y = (model->tex.hMax - areaTexSelected[1].y) / model->tex.hMax;
+    model->member[indexMemberAffected]->face[indexFaceAffected].point[1].coordFileTexture.x = areaTexSelected[1].x / model->tex.wMax;
+    model->member[indexMemberAffected]->face[indexFaceAffected].point[1].coordFileTexture.y = (model->tex.hMax - areaTexSelected[0].y) / model->tex.hMax;
+    model->member[indexMemberAffected]->face[indexFaceAffected].point[2].coordFileTexture.x = areaTexSelected[0].x / model->tex.wMax;
+    model->member[indexMemberAffected]->face[indexFaceAffected].point[2].coordFileTexture.y = (model->tex.hMax - areaTexSelected[0].y) / model->tex.hMax;
+    model->member[indexMemberAffected]->face[indexFaceAffected].point[3].coordFileTexture.x = areaTexSelected[0].x / model->tex.wMax;
+    model->member[indexMemberAffected]->face[indexFaceAffected].point[3].coordFileTexture.y = (model->tex.hMax - areaTexSelected[1].y) / model->tex.hMax;
 
-    model->member[indexMemberAffected].face[indexFaceAffected].color.r = 255;
-    model->member[indexMemberAffected].face[indexFaceAffected].color.v = 255;
-    model->member[indexMemberAffected].face[indexFaceAffected].color.b = 255;
+    model->member[indexMemberAffected]->face[indexFaceAffected].color.r = 255;
+    model->member[indexMemberAffected]->face[indexFaceAffected].color.v = 255;
+    model->member[indexMemberAffected]->face[indexFaceAffected].color.b = 255;
 
     return 1;
 }
@@ -846,22 +768,22 @@ void reverseTexture(Model *model, int axisReversing, int indexMemberAffected, in
 
     if(axisReversing == X_AXIS)
     {
-        tmp = model->member[indexMemberAffected].face[indexFaceAffected].point[0].coordFileTexture;
-        model->member[indexMemberAffected].face[indexFaceAffected].point[0].coordFileTexture = model->member[indexMemberAffected].face[indexFaceAffected].point[3].coordFileTexture;
-        model->member[indexMemberAffected].face[indexFaceAffected].point[3].coordFileTexture = tmp;
+        tmp = model->member[indexMemberAffected]->face[indexFaceAffected].point[0].coordFileTexture;
+        model->member[indexMemberAffected]->face[indexFaceAffected].point[0].coordFileTexture = model->member[indexMemberAffected]->face[indexFaceAffected].point[3].coordFileTexture;
+        model->member[indexMemberAffected]->face[indexFaceAffected].point[3].coordFileTexture = tmp;
 
-        tmp = model->member[indexMemberAffected].face[indexFaceAffected].point[1].coordFileTexture;
-        model->member[indexMemberAffected].face[indexFaceAffected].point[1].coordFileTexture = model->member[indexMemberAffected].face[indexFaceAffected].point[2].coordFileTexture;
-        model->member[indexMemberAffected].face[indexFaceAffected].point[2].coordFileTexture = tmp;
+        tmp = model->member[indexMemberAffected]->face[indexFaceAffected].point[1].coordFileTexture;
+        model->member[indexMemberAffected]->face[indexFaceAffected].point[1].coordFileTexture = model->member[indexMemberAffected]->face[indexFaceAffected].point[2].coordFileTexture;
+        model->member[indexMemberAffected]->face[indexFaceAffected].point[2].coordFileTexture = tmp;
     }
     else
     {
-        tmp = model->member[indexMemberAffected].face[indexFaceAffected].point[0].coordFileTexture;
-        model->member[indexMemberAffected].face[indexFaceAffected].point[0].coordFileTexture = model->member[indexMemberAffected].face[indexFaceAffected].point[1].coordFileTexture;
-        model->member[indexMemberAffected].face[indexFaceAffected].point[1].coordFileTexture = tmp;
+        tmp = model->member[indexMemberAffected]->face[indexFaceAffected].point[0].coordFileTexture;
+        model->member[indexMemberAffected]->face[indexFaceAffected].point[0].coordFileTexture = model->member[indexMemberAffected]->face[indexFaceAffected].point[1].coordFileTexture;
+        model->member[indexMemberAffected]->face[indexFaceAffected].point[1].coordFileTexture = tmp;
 
-        tmp = model->member[indexMemberAffected].face[indexFaceAffected].point[2].coordFileTexture;
-        model->member[indexMemberAffected].face[indexFaceAffected].point[2].coordFileTexture = model->member[indexMemberAffected].face[indexFaceAffected].point[3].coordFileTexture;
-        model->member[indexMemberAffected].face[indexFaceAffected].point[3].coordFileTexture = tmp;
+        tmp = model->member[indexMemberAffected]->face[indexFaceAffected].point[2].coordFileTexture;
+        model->member[indexMemberAffected]->face[indexFaceAffected].point[2].coordFileTexture = model->member[indexMemberAffected]->face[indexFaceAffected].point[3].coordFileTexture;
+        model->member[indexMemberAffected]->face[indexFaceAffected].point[3].coordFileTexture = tmp;
     }
 }
