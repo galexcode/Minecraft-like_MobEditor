@@ -93,9 +93,8 @@ void drawTexture(Texture *tex)
     position[3].y = windowHeight -(tex->pos.y + tex->height);
 
     glColor3ub(tex->color.r, tex->color.v, tex->color.b);
-
-    glEnable(GL_BLEND);
     glEnable(GL_TEXTURE_2D);
+    glEnable(GL_BLEND);
 
     glBindTexture(GL_TEXTURE_2D, tex->IDtex);
 
@@ -114,6 +113,6 @@ void drawTexture(Texture *tex)
 
     glBindTexture(GL_TEXTURE_2D, 0);
 
-    glDisable(GL_TEXTURE_2D);
     glDisable(GL_BLEND);
+    glDisable(GL_TEXTURE_2D);
 }

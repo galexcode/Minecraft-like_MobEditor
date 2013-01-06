@@ -30,6 +30,7 @@ int editor(char *mainPath, char *pathModel)
     int selection = FACE_SELECTION;
     int stateEvent = EVENT_FOR_EDITOR;
     int axisReversing = X_AXIS;
+    int buttonsToRender = MAIN_BUTTONS;
 
     double dimensionResized = -1;
     Text textDimensionResized;
@@ -37,15 +38,25 @@ int editor(char *mainPath, char *pathModel)
     Point3D pos, target;
     Model model;
 
-    Button *button;
+    Button *mainButton;
+    Button *fileButton;
+    Button *editionButton;
+    Button *toolButton;
+    Button *textureButton;
+
     Texture texButton;
     Texture texText;
     Texture textureEditor;
 
     buff.shadow = 1;
 
-    button = malloc(NUMBER_BUTTONS_EDITOR * sizeof(Button));
-    if(button == NULL)
+    mainButton = malloc(NUMBER_MAIN_BUTTONS * sizeof(Button));
+    editionButton = malloc(NUMBER_EDITION_BUTTONS * sizeof(Button));
+    fileButton = malloc(NUMBER_FILE_BUTTONS * sizeof(Button));
+    toolButton = malloc(NUMBER_TOOL_BUTTONS * sizeof(Button));
+    textureButton = malloc(NUMBER_TEXTURE_BUTTONS * sizeof(Button));
+
+    if(mainButton == NULL || editionButton == NULL || fileButton == NULL || toolButton == NULL || textureButton == NULL)
     {
         printf("Error allocating button's memory\n");
     }
@@ -70,6 +81,12 @@ int editor(char *mainPath, char *pathModel)
     textureEditor.pos.x = windowWidth - textureEditor.weight - 1;
     textureEditor.pos.y = 0;
 
+    attribMainButtons(mainButton, &texButton);
+    attribEditionButtons(editionButton, &texButton);
+    attribFileButtons(fileButton, &texButton);
+    attribToolButtons(toolButton, &texButton);
+    attribTextureButtons(textureButton, &texButton);
+
     selectionTexture.point[0].z = 0;
     selectionTexture.point[1].z = 0;
 
@@ -77,8 +94,6 @@ int editor(char *mainPath, char *pathModel)
     areaTexSelected[0].y = -1;
     areaTexSelected[1].x = -1;
     areaTexSelected[1].y = -1;
-
-    attribButtons(button, &texButton);
 
     initModel(&model);
 
@@ -110,11 +125,55 @@ int editor(char *mainPath, char *pathModel)
             event.keydown[SDLK_ESCAPE] = 0;
         }
 
-        for(i = 0; i < NUMBER_BUTTONS_EDITOR; i++)
+        for(i = 0; i < NUMBER_MAIN_BUTTONS; i++)
         {
             if(selected == 0)
             {
-                buttonCollision(&button[i]);
+                buttonCollision(&mainButton[i]);
+            }
+        }
+
+        if(buttonsToRender == FILE_BUTTONS)
+        {
+            for(i = 0; i < NUMBER_FILE_BUTTONS; i++)
+            {
+                if(selected == 0)
+                {
+                    buttonCollision(&fileButton[i]);
+                }
+            }
+        }
+
+        if(buttonsToRender == EDITION_BUTTONS)
+        {
+            for(i = 0; i < NUMBER_EDITION_BUTTONS; i++)
+            {
+                if(selected == 0)
+                {
+                    buttonCollision(&editionButton[i]);
+                }
+            }
+        }
+
+        if(buttonsToRender == TOOL_BUTTONS)
+        {
+            for(i = 0; i < NUMBER_TOOL_BUTTONS; i++)
+            {
+                if(selected == 0)
+                {
+                    buttonCollision(&toolButton[i]);
+                }
+            }
+        }
+
+        if(buttonsToRender == TEXTURE_BUTTONS)
+        {
+            for(i = 0; i < NUMBER_TEXTURE_BUTTONS; i++)
+            {
+                if(selected == 0)
+                {
+                    buttonCollision(&textureButton[i]);
+                }
             }
         }
 
@@ -183,7 +242,166 @@ int editor(char *mainPath, char *pathModel)
             model.saved = 0;
         }
 
-        if(button[0].selected == 1 && event.mouse[SDL_BUTTON_LEFT] == 1 && stateEvent == EVENT_FOR_EDITOR)
+        if(mainButton[0].selected == 1 && event.mouse[SDL_BUTTON_LEFT] == 1 && stateEvent == EVENT_FOR_EDITOR)
+        {
+            if(buttonsToRender != FILE_BUTTONS)
+                buttonsToRender = FILE_BUTTONS;
+            else
+                buttonsToRender = MAIN_BUTTONS;
+
+            event.mouse[SDL_BUTTON_LEFT] = 0;
+        }
+
+        if(mainButton[1].selected == 1 && event.mouse[SDL_BUTTON_LEFT] == 1 && stateEvent == EVENT_FOR_EDITOR)
+        {
+            if(buttonsToRender != EDITION_BUTTONS)
+                buttonsToRender = EDITION_BUTTONS;
+            else
+                buttonsToRender = MAIN_BUTTONS;
+
+            event.mouse[SDL_BUTTON_LEFT] = 0;
+        }
+
+        if(mainButton[2].selected == 1 && event.mouse[SDL_BUTTON_LEFT] == 1 && stateEvent == EVENT_FOR_EDITOR)
+        {
+            if(buttonsToRender != TOOL_BUTTONS)
+                buttonsToRender = TOOL_BUTTONS;
+            else
+                buttonsToRender = MAIN_BUTTONS;
+
+            event.mouse[SDL_BUTTON_LEFT] = 0;
+        }
+
+        if(mainButton[3].selected == 1 && event.mouse[SDL_BUTTON_LEFT] == 1 && stateEvent == EVENT_FOR_EDITOR)
+        {
+            if(buttonsToRender != TEXTURE_BUTTONS)
+                buttonsToRender = TEXTURE_BUTTONS;
+            else
+                buttonsToRender = MAIN_BUTTONS;
+
+            event.mouse[SDL_BUTTON_LEFT] = 0;
+        }
+
+        if(buttonsToRender == FILE_BUTTONS)
+        {
+            if(fileButton[0].selected == 1 && event.mouse[SDL_BUTTON_LEFT] == 1 && stateEvent == EVENT_FOR_EDITOR)
+            {
+                if(openBrowser(buff.string, MODELS))
+                {
+                    createModel(mainPath, buff.string, &model);
+                    sprintf(pathModel, buff.string);
+                }
+                event.mouse[SDL_BUTTON_LEFT] = 0;
+            }
+            if(fileButton[1].selected == 1 && event.mouse[SDL_BUTTON_LEFT] == 1 && stateEvent == EVENT_FOR_EDITOR)
+            {
+                saveModel(pathModel, &model);
+                model.saved = 1;
+                addStringToText(&fileButton[1].text, "Saved");
+                event.mouse[SDL_BUTTON_LEFT] = 0;
+            }
+        }
+
+        if(buttonsToRender == EDITION_BUTTONS)
+        {
+            if(editionButton[0].selected == 1 && event.mouse[SDL_BUTTON_LEFT] == 1 && stateEvent == EVENT_FOR_EDITOR)
+            {
+                event.mouse[SDL_BUTTON_LEFT] = 0;
+            }
+
+            if(editionButton[1].selected == 1 && event.mouse[SDL_BUTTON_LEFT] == 1 && stateEvent == EVENT_FOR_EDITOR)
+            {
+                event.mouse[SDL_BUTTON_LEFT] = 0;
+            }
+        }
+
+        if(buttonsToRender == TOOL_BUTTONS)
+        {
+            if(toolButton[0].selected == 1 && event.mouse[SDL_BUTTON_LEFT] == 1 && stateEvent == EVENT_FOR_EDITOR)
+            {
+                if(model.nbMembers < MEMBERS_MAX)
+                {
+                    addCube(&model);
+                    model.saved = 0;
+                    event.mouse[SDL_BUTTON_LEFT] = 0;
+                }
+                event.mouse[SDL_BUTTON_LEFT] = 0;
+            }
+
+            if(toolButton[1].selected == 1 && event.mouse[SDL_BUTTON_LEFT] == 1 && stateEvent == EVENT_FOR_EDITOR)
+            {
+                if(selected == 1 && selection == CUBE_SELECTION)
+                {
+                    removeCube(&model, &indexMemberAffected);
+                    model.saved = 0;
+                    selected = 0;
+                }
+                event.mouse[SDL_BUTTON_LEFT] = 0;
+            }
+            if(toolButton[1].selected == 1 && event.mouse[SDL_BUTTON_LEFT] == 1 && stateEvent == EVENT_FOR_EDITOR)
+            {
+                if(selected == 1 && selection == CUBE_SELECTION)
+                {
+                    removeCube(&model, &indexMemberAffected);
+                    model.saved = 0;
+                    selected = 0;
+                }
+                event.mouse[SDL_BUTTON_LEFT] = 0;
+            }
+            if(toolButton[2].selected == 1 && event.mouse[SDL_BUTTON_LEFT] == 1 && stateEvent == EVENT_FOR_EDITOR)
+            {
+                if(selection == FACE_SELECTION)
+                {
+                    addStringToText(&toolButton[2].text, "Selection : Cube");
+                    selection = CUBE_SELECTION;
+                }
+                else if(selection == CUBE_SELECTION)
+                {
+                    addStringToText(&toolButton[2].text, "Selection : Face");
+                    selection = FACE_SELECTION;
+                }
+                event.mouse[SDL_BUTTON_LEFT] = 0;
+            }
+        }
+
+        if(buttonsToRender == TEXTURE_BUTTONS)
+        {
+            if(textureButton[0].selected == 1 && event.mouse[SDL_BUTTON_LEFT] == 1 && stateEvent == EVENT_FOR_EDITOR)
+            {
+                if(openBrowser(buff.string, TEXTURES))
+                {
+                    getNameFileFromPath(mainPath, buff.string, model.tex.path);
+                }
+                openTexture(mainPath, &model);
+                event.mouse[SDL_BUTTON_LEFT] = 0;
+                textureButton[0].selected = 0;
+            }
+
+            if(textureButton[1].selected == 1 && event.mouse[SDL_BUTTON_LEFT] == 1 && stateEvent == EVENT_FOR_EDITOR)
+            {
+                if(axisReversing == X_AXIS)
+                {
+                    addStringToText(&textureButton[1].text, "Invert Texture : Y");
+                    axisReversing = Y_AXIS;
+                }
+                else
+                {
+                    addStringToText(&textureButton[1].text, "Invert Texture : X");
+                    axisReversing = X_AXIS;
+                }
+
+                event.mouse[SDL_BUTTON_LEFT] = 0;
+            }
+        }
+
+        if(event.keydown[SDLK_ESCAPE] == 1 || event.mouse[SDL_BUTTON_LEFT] == 1)
+        {
+            buttonsToRender = MAIN_BUTTONS;
+            event.mouse[SDL_BUTTON_LEFT] = 0;
+            event.keydown[SDLK_ESCAPE] = 0;
+        }
+
+        /*if(mainButton[0].selected == 1 && event.mouse[SDL_BUTTON_LEFT] == 1 && stateEvent == EVENT_FOR_EDITOR)
         {
             if(model.nbMembers < MEMBERS_MAX)
             {
@@ -192,29 +410,29 @@ int editor(char *mainPath, char *pathModel)
                 event.mouse[SDL_BUTTON_LEFT] = 0;
             }
         }
-        if(button[1].selected == 1 && event.mouse[SDL_BUTTON_LEFT] == 1 && stateEvent == EVENT_FOR_EDITOR)
+        if(mainButton[1].selected == 1 && event.mouse[SDL_BUTTON_LEFT] == 1 && stateEvent == EVENT_FOR_EDITOR)
         {
             if(selection == FACE_SELECTION)
             {
-                addStringToText(&button[1].text, "Selection : Cube");
+                addStringToText(&mainButton[1].text, "Selection : Cube");
                 selection = CUBE_SELECTION;
             }
             else if(selection == CUBE_SELECTION)
             {
-                addStringToText(&button[1].text, "Selection : Face");
+                addStringToText(&mainButton[1].text, "Selection : Face");
                 selection = FACE_SELECTION;
             }
             event.mouse[SDL_BUTTON_LEFT] = 0;
         }
 
-        if(button[2].selected == 1 && event.mouse[SDL_BUTTON_LEFT] == 1 && stateEvent == EVENT_FOR_EDITOR)
+        if(mainButton[2].selected == 1 && event.mouse[SDL_BUTTON_LEFT] == 1 && stateEvent == EVENT_FOR_EDITOR)
         {
             saveModel(pathModel, &model);
             model.saved = 1;
-            addStringToText(&button[2].text, "Saved");
+            addStringToText(&mainButton[2].text, "Saved");
             event.mouse[SDL_BUTTON_LEFT] = 0;
         }
-        if(button[3].selected == 1 && event.mouse[SDL_BUTTON_LEFT] == 1 && stateEvent == EVENT_FOR_EDITOR)
+        if(mainButton[3].selected == 1 && event.mouse[SDL_BUTTON_LEFT] == 1 && stateEvent == EVENT_FOR_EDITOR)
         {
             if(openBrowser(buff.string, MODELS))
             {
@@ -222,8 +440,9 @@ int editor(char *mainPath, char *pathModel)
                 sprintf(pathModel, buff.string);
             }
             event.mouse[SDL_BUTTON_LEFT] = 0;
+            mainButton[3].selected = 0;
         }
-        if(button[4].selected == 1 && event.mouse[SDL_BUTTON_LEFT] == 1 && stateEvent == EVENT_FOR_EDITOR)
+        if(mainButton[4].selected == 1 && event.mouse[SDL_BUTTON_LEFT] == 1 && stateEvent == EVENT_FOR_EDITOR)
         {
             if(openBrowser(buff.string, TEXTURES))
             {
@@ -231,22 +450,23 @@ int editor(char *mainPath, char *pathModel)
             }
             openTexture(mainPath, &model);
             event.mouse[SDL_BUTTON_LEFT] = 0;
+            mainButton[4].selected = 0;
         }
-        if(button[5].selected == 1 && event.mouse[SDL_BUTTON_LEFT] == 1 && stateEvent == EVENT_FOR_EDITOR)
+        if(mainButton[5].selected == 1 && event.mouse[SDL_BUTTON_LEFT] == 1 && stateEvent == EVENT_FOR_EDITOR)
         {
             if(axisReversing == X_AXIS)
             {
-                addStringToText(&button[5].text, "Invert Texture : Y");
+                addStringToText(&mainButton[5].text, "Invert Texture : Y");
                 axisReversing = Y_AXIS;
             }
             else
             {
-                addStringToText(&button[5].text, "Invert Texture : X");
+                addStringToText(&mainButton[5].text, "Invert Texture : X");
                 axisReversing = X_AXIS;
             }
 
             event.mouse[SDL_BUTTON_LEFT] = 0;
-        }
+        }*/
         if(event.keydown[SDLK_DELETE] == 1 && stateEvent == EVENT_FOR_EDITOR)
         {
             if(selected == 1 && selection == CUBE_SELECTION)
@@ -264,9 +484,9 @@ int editor(char *mainPath, char *pathModel)
             SDL_EnableUNICODE(0);
             event.keydown[SDLK_ESCAPE] = 0;
 
-            for(i = 0; i < NUMBER_BUTTONS_EDITOR; i++)
+            for(i = 0; i < NUMBER_MAIN_BUTTONS; i++)
             {
-                button[i].textInput = 0;
+                mainButton[i].textInput = 0;
             }
         }
 
@@ -328,7 +548,7 @@ int editor(char *mainPath, char *pathModel)
             textDimensionResized.nbChar = 8;
 
             modeRender(RENDER_2D, &pos, &target, FOV);
-            renderMenuEditor(&model, button, &texText, weightLetter, &buff, &textureEditor, &selectionTexture, &textDimensionResized);
+            renderMenuEditor(&model, mainButton, editionButton, fileButton, toolButton, textureButton, buttonsToRender, &texText, weightLetter, &buff, &textureEditor, &selectionTexture, &textDimensionResized);
 
             refreshScene();
             if(indexMemberAffected >= 0 && indexMemberAffected < model.nbMembers && indexFaceAffected >= 0 && indexFaceAffected < 6 && selection == FACE_SELECTION)
@@ -361,9 +581,9 @@ int editor(char *mainPath, char *pathModel)
                 addCharToString(&buff, getCharFromKeyboard());
             }
 
-            if(model.saved == 0 && strstr(button[2].text.string, "Save Model") == NULL)
+            if(model.saved == 0 && strstr(fileButton[1].text.string, "Save Model") == NULL)
             {
-                addStringToText(&button[2].text, "Save Model");
+                addStringToText(&fileButton[1].text, "Save Model");
             }
 
             previousTicks = actualTicks;
@@ -378,6 +598,13 @@ int editor(char *mainPath, char *pathModel)
     {
         freeModel(&model);
     }
+
+    free(mainButton);
+    free(editionButton);
+    free(fileButton);
+    free(toolButton);
+    free(textureButton);
+
     return 1;
 }
 
@@ -620,21 +847,54 @@ double resizeCube(Model *model, int indexMemberAffected, int indexFaceAffected, 
     return dimensionResized;
 }
 
-void renderMenuEditor(Model *model, Button *button, Texture *textureText, int *weightLetter, Text *buff, Texture *textureEditor, Face *selectionTexture, Text *textDimensionResized)
+void renderMenuEditor(Model *model, Button *mainButton, Button *editionButton, Button *fileButton, Button *toolButton, Button *textureButton, int buttonsToRender, Texture *textureText, int *weightLetter, Text *buff, Texture *textureEditor, Face *selectionTexture, Text *textDimensionResized)
 {
     int i;
 
     glPushMatrix();
     glTranslated(0, 0, -100);
     drawTexture(textureEditor);
-    for(i = 0; i < NUMBER_BUTTONS_EDITOR; i++)
+
+    for(i = 0; i < NUMBER_MAIN_BUTTONS; i++)
     {
-        renderButton(&button[i], textureText, weightLetter, buff);
+        renderButton(&mainButton[i], textureText, weightLetter, buff);
     }
 
-    glTranslated(0, 0, -1);
-    drawTexture(&model->tex);
+    if(buttonsToRender == EDITION_BUTTONS)
+    {
+        for(i = 0; i < NUMBER_EDITION_BUTTONS; i++)
+        {
+            renderButton(&editionButton[i], textureText, weightLetter, buff);
+        }
+    }
+
+    if(buttonsToRender == FILE_BUTTONS)
+    {
+        for(i = 0; i < NUMBER_FILE_BUTTONS; i++)
+        {
+            renderButton(&fileButton[i], textureText, weightLetter, buff);
+        }
+    }
+
+    if(buttonsToRender == TOOL_BUTTONS)
+    {
+        for(i = 0; i < NUMBER_TOOL_BUTTONS; i++)
+        {
+            renderButton(&toolButton[i], textureText, weightLetter, buff);
+        }
+    }
+
+    if(buttonsToRender == TEXTURE_BUTTONS)
+    {
+        for(i = 0; i < NUMBER_TEXTURE_BUTTONS; i++)
+        {
+            renderButton(&textureButton[i], textureText, weightLetter, buff);
+        }
+    }
+
     glTranslated(0, 0, 1);
+    drawTexture(&model->tex);
+    glTranslated(0, 0, -1);
 
     glBegin(GL_QUADS);
     glVertex2d(selectionTexture->point[0].x, selectionTexture->point[0].y);

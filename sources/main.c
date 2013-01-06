@@ -43,8 +43,7 @@ int main(int argc, char *argv[])
     glDisable(GL_TEXTURE_2D);
     glDisable(GL_DEPTH_TEST);
 
-
-    SDL_Quit();
+    quitSDL();
 
     return 0;
 }

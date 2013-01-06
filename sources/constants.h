@@ -18,7 +18,11 @@
     #include <errno.h>
 
     #define MEMBERS_MAX 100
-    #define NUMBER_BUTTONS_EDITOR 6
+    #define NUMBER_MAIN_BUTTONS 4
+    #define NUMBER_EDITION_BUTTONS 2
+    #define NUMBER_FILE_BUTTONS 2
+    #define NUMBER_TOOL_BUTTONS 3
+    #define NUMBER_TEXTURE_BUTTONS 2
     #define SIZE_PATH_MAX 512
 
     enum{COLLISION_MODE, RENDER_MODE};
@@ -29,6 +33,7 @@
     enum{GET_MODEL_PATH, GET_TEXTURE_PATH};
     enum{X_AXIS, Y_AXIS, Z_AXIS};
     enum{MODELS, TEXTURES};
+    enum{MAIN_BUTTONS, FILE_BUTTONS, EDITION_BUTTONS, TOOL_BUTTONS, TEXTURE_BUTTONS};
 
     int quitSDL();
     int initOpenGL();

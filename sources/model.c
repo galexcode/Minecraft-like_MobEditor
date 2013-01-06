@@ -193,6 +193,8 @@ int renderModel(Model *model, int mode)
 
     glPopMatrix();
 
+    glBindTexture(GL_TEXTURE_2D, 0);
+
     return 1;
 }
 

@@ -159,48 +159,130 @@ void buttonCollision(Button *button)
     }
 }
 
-void attribButtons(Button *button, Texture *texButton)
+void attribMainButtons(Button *button, Texture *texButton)
 {
     int i;
 
-    for(i = 0; i < NUMBER_BUTTONS_EDITOR; i++)
+    for(i = 0; i < NUMBER_MAIN_BUTTONS; i++)
     {
         initButton(&button[i], texButton);
     }
 
     button[0].height = 40;
-    button[0].weight = 130;
+    button[0].weight = 60;
     button[0].pos.x = 10;
     button[0].pos.y = 10;
-    addStringToText(&button[0].text, "Add a cube");
+    addStringToText(&button[0].text, "File");
 
     button[1].height = 40;
-    button[1].weight = 180;
-    button[1].pos.x = 10;
-    button[1].pos.y = 55;
-    addStringToText(&button[1].text, "Selection : Face");
+    button[1].weight = 80;
+    button[1].pos.x = button[0].pos.x + button[0].weight + 10;
+    button[1].pos.y = button[0].pos.y;
+    addStringToText(&button[1].text, "Edition");
 
     button[2].height = 40;
-    button[2].weight = 150;
-    button[2].pos.x = 10;
-    button[2].pos.y = windowHeight - button[2].height - 10;
-    addStringToText(&button[2].text, "Save Model");
+    button[2].weight = 80;
+    button[2].pos.x = button[1].pos.x + button[1].weight + 10;
+    button[2].pos.y = button[0].pos.y;
+    addStringToText(&button[2].text, "Tools");
 
     button[3].height = 40;
-    button[3].weight = 170;
-    button[3].pos.x = 170;
-    button[3].pos.y = windowHeight - button[3].height - 10;
-    addStringToText(&button[3].text, "Open new model");
+    button[3].weight = 80;
+    button[3].pos.x = button[2].pos.x + button[2].weight + 10;
+    button[3].pos.y = button[0].pos.y;
+    addStringToText(&button[3].text, "Texture");
+}
 
-    button[4].height = 40;
-    button[4].weight = 170;
-    button[4].pos.x = windowWidth - button[4].weight - 10;
-    button[4].pos.y = 10;
-    addStringToText(&button[4].text, "Apply a texture");
+void attribEditionButtons(Button *button, Texture *texButton)
+{
+    int i;
 
-    button[5].height = 40;
-    button[5].weight = 200;
-    button[5].pos.x = windowWidth - button[5].weight - 10;
-    button[5].pos.y = windowHeight - button[5].height - 10;
-    addStringToText(&button[5].text, "Invert Texture : X");
+    for(i = 0; i < NUMBER_TEXTURE_BUTTONS; i++)
+    {
+        initButton(&button[i], texButton);
+    }
+
+    button[0].height = 40;
+    button[0].weight = 220;
+    button[0].pos.x = 80;
+    button[0].pos.y = 55;
+    addStringToText(&button[0].text, "Copy Cube (CTRL+C)");
+
+    button[1].height = 40;
+    button[1].weight = 220;
+    button[1].pos.x = button[0].pos.x;
+    button[1].pos.y = button[0].pos.y + button[0].height + 5;
+    addStringToText(&button[1].text, "Paste Cube (CTRL+V)");
+}
+
+void attribFileButtons(Button *button, Texture *texButton)
+{
+    int i;
+
+    for(i = 0; i < NUMBER_FILE_BUTTONS; i++)
+    {
+        initButton(&button[i], texButton);
+    }
+
+    button[0].height = 40;
+    button[0].weight = 150;
+    button[0].pos.x = 10;
+    button[0].pos.y = 55;
+    addStringToText(&button[0].text, "Open A Model");
+
+    button[1].height = 40;
+    button[1].weight = 130;
+    button[1].pos.x = button[0].pos.x;
+    button[1].pos.y = button[0].pos.y + button[0].height + 5;
+    addStringToText(&button[1].text, "Save Model");
+}
+
+void attribToolButtons(Button *button, Texture *texButton)
+{
+    int i;
+
+    for(i = 0; i < NUMBER_TOOL_BUTTONS; i++)
+    {
+        initButton(&button[i], texButton);
+    }
+
+    button[0].height = 40;
+    button[0].weight = 135;
+    button[0].pos.x = 170;
+    button[0].pos.y = 55;
+    addStringToText(&button[0].text, "Add A Cube");
+
+    button[1].height = 40;
+    button[1].weight = 140;
+    button[1].pos.x = button[0].pos.x;
+    button[1].pos.y = button[0].pos.y + button[0].height + 5;
+    addStringToText(&button[1].text, "Remove Cube");
+
+    button[2].height = 40;
+    button[2].weight = 170;
+    button[2].pos.x = button[1].pos.x;
+    button[2].pos.y = button[1].pos.y + button[1].height + 5;
+    addStringToText(&button[2].text, "Selection : Face");
+}
+
+void attribTextureButtons(Button *button, Texture *texButton)
+{
+    int i;
+
+    for(i = 0; i < NUMBER_TEXTURE_BUTTONS; i++)
+    {
+        initButton(&button[i], texButton);
+    }
+
+    button[0].height = 40;
+    button[0].weight = 170;
+    button[0].pos.x = 260;
+    button[0].pos.y = 55;
+    addStringToText(&button[0].text, "Apply A Texture");
+
+    button[1].height = 40;
+    button[1].weight = 200;
+    button[1].pos.x = button[0].pos.x;
+    button[1].pos.y = button[0].pos.y + button[0].height + 10;
+    addStringToText(&button[1].text, "Invert Texture : X");
 }
