@@ -187,7 +187,7 @@ void attribMainButtons(Button *button, Texture *texButton)
     addStringToText(&button[2].text, "Tools");
 
     button[3].height = 40;
-    button[3].weight = 80;
+    button[3].weight = 90;
     button[3].pos.x = button[2].pos.x + button[2].weight + 10;
     button[3].pos.y = button[0].pos.y;
     addStringToText(&button[3].text, "Texture");
@@ -213,6 +213,12 @@ void attribEditionButtons(Button *button, Texture *texButton)
     button[1].pos.x = button[0].pos.x;
     button[1].pos.y = button[0].pos.y + button[0].height + 5;
     addStringToText(&button[1].text, "Paste Cube (CTRL+V)");
+
+    button[2].height = 40;
+    button[2].weight = 190;
+    button[2].pos.x = button[0].pos.x;
+    button[2].pos.y = button[1].pos.y + button[1].height + 5;
+    addStringToText(&button[2].text, "Sculpt Mode");
 }
 
 void attribFileButtons(Button *button, Texture *texButton)
@@ -235,6 +241,12 @@ void attribFileButtons(Button *button, Texture *texButton)
     button[1].pos.x = button[0].pos.x;
     button[1].pos.y = button[0].pos.y + button[0].height + 5;
     addStringToText(&button[1].text, "Save Model");
+
+    button[2].height = 40;
+    button[2].weight = 110;
+    button[2].pos.x = button[0].pos.x;
+    button[2].pos.y = button[1].pos.y + button[1].height + 5;
+    addStringToText(&button[2].text, "Save As ...");
 }
 
 void attribToolButtons(Button *button, Texture *texButton)
@@ -283,6 +295,12 @@ void attribTextureButtons(Button *button, Texture *texButton)
     button[1].height = 40;
     button[1].weight = 200;
     button[1].pos.x = button[0].pos.x;
-    button[1].pos.y = button[0].pos.y + button[0].height + 10;
+    button[1].pos.y = button[0].pos.y + button[0].height + 5;
     addStringToText(&button[1].text, "Invert Texture : X");
+
+    button[2].height = 40;
+    button[2].weight = 200;
+    button[2].pos.x = button[0].pos.x;
+    button[2].pos.y = button[1].pos.y + button[0].height + 5;
+    addStringToText(&button[2].text, "Reverse Texture");
 }

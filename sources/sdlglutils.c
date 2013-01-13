@@ -160,7 +160,7 @@ void drawAxis(double scale)
     glDisable(GL_TEXTURE_2D);
     glEnable(GL_BLEND);
     glEnable(GL_LINE_SMOOTH);
-    glLineWidth(2);
+    glLineWidth(4);
     glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
     glScaled(scale,scale,scale);
     glBegin(GL_LINES);

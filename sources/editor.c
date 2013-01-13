@@ -26,11 +26,17 @@ int editor(char *mainPath, char *pathModel)
     int selectioningTex = 0;
     Text buff;
     int selected = 0;
+    int buttonSelected = 0;
     int weightLetter[256];
     int selection = FACE_SELECTION;
     int stateEvent = EVENT_FOR_EDITOR;
     int axisReversing = X_AXIS;
+    int modeModelisation = SCULPT_MODE;
     int buttonsToRender = MAIN_BUTTONS;
+
+    int copied = 0;
+    Cube cubeCopied;
+    Point3D translationCopied;
 
     double dimensionResized = -1;
     Text textDimensionResized;
@@ -112,7 +118,10 @@ int editor(char *mainPath, char *pathModel)
 
     while(!leave)
     {
+        buttonSelected = 0;
+
         updateEvents(&event);
+
         if(event.leave == 1)
         {
             leave = 1;
@@ -130,6 +139,7 @@ int editor(char *mainPath, char *pathModel)
             if(selected == 0)
             {
                 buttonCollision(&mainButton[i]);
+                buttonSelected = 1;
             }
         }
 
@@ -140,6 +150,7 @@ int editor(char *mainPath, char *pathModel)
                 if(selected == 0)
                 {
                     buttonCollision(&fileButton[i]);
+                    buttonSelected = 1;
                 }
             }
         }
@@ -148,10 +159,8 @@ int editor(char *mainPath, char *pathModel)
         {
             for(i = 0; i < NUMBER_EDITION_BUTTONS; i++)
             {
-                if(selected == 0)
-                {
-                    buttonCollision(&editionButton[i]);
-                }
+                buttonCollision(&editionButton[i]);
+                buttonSelected = 1;
             }
         }
 
@@ -159,10 +168,8 @@ int editor(char *mainPath, char *pathModel)
         {
             for(i = 0; i < NUMBER_TOOL_BUTTONS; i++)
             {
-                if(selected == 0)
-                {
-                    buttonCollision(&toolButton[i]);
-                }
+                buttonCollision(&toolButton[i]);
+                buttonSelected = 1;
             }
         }
 
@@ -170,10 +177,8 @@ int editor(char *mainPath, char *pathModel)
         {
             for(i = 0; i < NUMBER_TEXTURE_BUTTONS; i++)
             {
-                if(selected == 0)
-                {
-                    buttonCollision(&textureButton[i]);
-                }
+                buttonCollision(&textureButton[i]);
+                buttonSelected = 1;
             }
         }
 
@@ -217,7 +222,10 @@ int editor(char *mainPath, char *pathModel)
         }
         if(event.mouse[SDL_BUTTON_LEFT] == 1 && stateEvent == EVENT_FOR_EDITOR && event.posX < textureEditor.pos.x)
         {
-            selected = 0;
+            if(buttonSelected == 0)
+            {
+                selected = 0;
+            }
 
             if(areaTexSelected[0].x >= 0)
             {
@@ -227,18 +235,10 @@ int editor(char *mainPath, char *pathModel)
                 }
             }
         }
-        if((event.keydown[SDLK_LCTRL] == 1 || event.keydown[SDLK_RCTRL] == 1) && stateEvent == EVENT_FOR_EDITOR)
-        {
-            if(indexMemberAffected >= 0 && indexMemberAffected < model.nbMembers && indexFaceAffected >= 0 && indexFaceAffected < 6 && selection == FACE_SELECTION)
-            {
-                reverseTexture(&model, axisReversing, indexMemberAffected, indexFaceAffected);
-            }
-            event.keydown[SDLK_RCTRL] = 0;
-            event.keydown[SDLK_LCTRL] = 0;
-        }
+
         if(indexMemberAffected >= 0 && indexMemberAffected < model.nbMembers && indexFaceAffected >= 0 && indexFaceAffected < 6 && selection == FACE_SELECTION)
         {
-            dimensionResized = resizeCube(&model, indexMemberAffected, indexFaceAffected, selected);
+            dimensionResized = editCube(&model, modeModelisation, indexMemberAffected, indexFaceAffected, selected);
             model.saved = 0;
         }
 
@@ -300,17 +300,54 @@ int editor(char *mainPath, char *pathModel)
                 addStringToText(&fileButton[1].text, "Saved");
                 event.mouse[SDL_BUTTON_LEFT] = 0;
             }
-        }
-
-        if(buttonsToRender == EDITION_BUTTONS)
-        {
-            if(editionButton[0].selected == 1 && event.mouse[SDL_BUTTON_LEFT] == 1 && stateEvent == EVENT_FOR_EDITOR)
+            if(fileButton[2].selected == 1 && event.mouse[SDL_BUTTON_LEFT] == 1 && stateEvent == EVENT_FOR_EDITOR)
             {
+                if(openBrowser(buff.string, MODELS))
+                {
+                    sprintf(pathModel, buff.string);
+                    saveModel(buff.string, &model);
+                    model.saved = 1;
+                }
+
+                addStringToText(&fileButton[1].text, "Saved");
                 event.mouse[SDL_BUTTON_LEFT] = 0;
             }
+        }
 
-            if(editionButton[1].selected == 1 && event.mouse[SDL_BUTTON_LEFT] == 1 && stateEvent == EVENT_FOR_EDITOR)
+        if(buttonsToRender == EDITION_BUTTONS || ((event.keydown[SDLK_LCTRL] == 1 || event.keydown[SDLK_RCTRL] == 1) && (event.keydown[SDLK_c] == 1 || event.keydown[SDLK_v] == 1)))
+        {
+            if((editionButton[0].selected == 1 && event.mouse[SDL_BUTTON_LEFT] == 1 && stateEvent == EVENT_FOR_EDITOR) || ((event.keydown[SDLK_LCTRL] == 1 || event.keydown[SDLK_RCTRL] == 1) && event.keydown[SDLK_c] == 1))
             {
+                if(selected == 1 && selection == CUBE_SELECTION)
+                {
+                    copyCube(&model, indexMemberAffected, &cubeCopied, &translationCopied);
+                    copied = 1;
+                }
+                event.mouse[SDL_BUTTON_LEFT] = 0;
+                event.keydown[SDLK_c] = 0;
+            }
+
+            if((editionButton[1].selected == 1 && event.mouse[SDL_BUTTON_LEFT] == 1 && stateEvent == EVENT_FOR_EDITOR) || ((event.keydown[SDLK_LCTRL] == 1 || event.keydown[SDLK_RCTRL] == 1) && event.keydown[SDLK_v] == 1))
+            {
+                if(copied == 1)
+                {
+                    pasteCube(&model, &cubeCopied, &translationCopied);
+                }
+                event.mouse[SDL_BUTTON_LEFT] = 0;
+                event.keydown[SDLK_v] = 0;
+            }
+            if(editionButton[2].selected == 1 && event.mouse[SDL_BUTTON_LEFT] == 1 && stateEvent == EVENT_FOR_EDITOR)
+            {
+                if(modeModelisation == SCULPT_MODE)
+                {
+                    modeModelisation = TRANSLATION_MODE;
+                    addStringToText(&editionButton[2].text, "Translation Mode");
+                }
+                else
+                {
+                    modeModelisation = SCULPT_MODE;
+                    addStringToText(&editionButton[2].text, "Sculpt Mode");
+                }
                 event.mouse[SDL_BUTTON_LEFT] = 0;
             }
         }
@@ -364,17 +401,17 @@ int editor(char *mainPath, char *pathModel)
             }
         }
 
-        if(buttonsToRender == TEXTURE_BUTTONS)
+        if(buttonsToRender == TEXTURE_BUTTONS || event.keydown[SDLK_RSHIFT] == 1)
         {
             if(textureButton[0].selected == 1 && event.mouse[SDL_BUTTON_LEFT] == 1 && stateEvent == EVENT_FOR_EDITOR)
             {
                 if(openBrowser(buff.string, TEXTURES))
                 {
                     getNameFileFromPath(mainPath, buff.string, model.tex.path);
+                    openTexture(mainPath, &model);
                 }
-                openTexture(mainPath, &model);
+
                 event.mouse[SDL_BUTTON_LEFT] = 0;
-                textureButton[0].selected = 0;
             }
 
             if(textureButton[1].selected == 1 && event.mouse[SDL_BUTTON_LEFT] == 1 && stateEvent == EVENT_FOR_EDITOR)
@@ -392,81 +429,22 @@ int editor(char *mainPath, char *pathModel)
 
                 event.mouse[SDL_BUTTON_LEFT] = 0;
             }
+            if((textureButton[1].selected == 1 && event.mouse[SDL_BUTTON_LEFT] == 1 && stateEvent == EVENT_FOR_EDITOR) || event.keydown[SDLK_RSHIFT] == 1)
+            {
+                if(indexMemberAffected >= 0 && indexMemberAffected < model.nbMembers && indexFaceAffected >= 0 && indexFaceAffected < 6 && selection == FACE_SELECTION)
+                {
+                    reverseTexture(&model, axisReversing, indexMemberAffected, indexFaceAffected);
+                }
+                event.keydown[SDLK_RSHIFT] = 0;
+                event.mouse[SDL_BUTTON_LEFT] = 0;
+            }
         }
 
         if(event.keydown[SDLK_ESCAPE] == 1 || event.mouse[SDL_BUTTON_LEFT] == 1)
         {
             buttonsToRender = MAIN_BUTTONS;
-            event.mouse[SDL_BUTTON_LEFT] = 0;
-            event.keydown[SDLK_ESCAPE] = 0;
         }
 
-        /*if(mainButton[0].selected == 1 && event.mouse[SDL_BUTTON_LEFT] == 1 && stateEvent == EVENT_FOR_EDITOR)
-        {
-            if(model.nbMembers < MEMBERS_MAX)
-            {
-                addCube(&model);
-                model.saved = 0;
-                event.mouse[SDL_BUTTON_LEFT] = 0;
-            }
-        }
-        if(mainButton[1].selected == 1 && event.mouse[SDL_BUTTON_LEFT] == 1 && stateEvent == EVENT_FOR_EDITOR)
-        {
-            if(selection == FACE_SELECTION)
-            {
-                addStringToText(&mainButton[1].text, "Selection : Cube");
-                selection = CUBE_SELECTION;
-            }
-            else if(selection == CUBE_SELECTION)
-            {
-                addStringToText(&mainButton[1].text, "Selection : Face");
-                selection = FACE_SELECTION;
-            }
-            event.mouse[SDL_BUTTON_LEFT] = 0;
-        }
-
-        if(mainButton[2].selected == 1 && event.mouse[SDL_BUTTON_LEFT] == 1 && stateEvent == EVENT_FOR_EDITOR)
-        {
-            saveModel(pathModel, &model);
-            model.saved = 1;
-            addStringToText(&mainButton[2].text, "Saved");
-            event.mouse[SDL_BUTTON_LEFT] = 0;
-        }
-        if(mainButton[3].selected == 1 && event.mouse[SDL_BUTTON_LEFT] == 1 && stateEvent == EVENT_FOR_EDITOR)
-        {
-            if(openBrowser(buff.string, MODELS))
-            {
-                createModel(mainPath, buff.string, &model);
-                sprintf(pathModel, buff.string);
-            }
-            event.mouse[SDL_BUTTON_LEFT] = 0;
-            mainButton[3].selected = 0;
-        }
-        if(mainButton[4].selected == 1 && event.mouse[SDL_BUTTON_LEFT] == 1 && stateEvent == EVENT_FOR_EDITOR)
-        {
-            if(openBrowser(buff.string, TEXTURES))
-            {
-                getNameFileFromPath(mainPath, buff.string, model.tex.path);
-            }
-            openTexture(mainPath, &model);
-            event.mouse[SDL_BUTTON_LEFT] = 0;
-            mainButton[4].selected = 0;
-        }
-        if(mainButton[5].selected == 1 && event.mouse[SDL_BUTTON_LEFT] == 1 && stateEvent == EVENT_FOR_EDITOR)
-        {
-            if(axisReversing == X_AXIS)
-            {
-                addStringToText(&mainButton[5].text, "Invert Texture : Y");
-                axisReversing = Y_AXIS;
-            }
-            else
-            {
-                addStringToText(&mainButton[5].text, "Invert Texture : X");
-                axisReversing = X_AXIS;
-            }
-
-            event.mouse[SDL_BUTTON_LEFT] = 0;
-        }*/
         if(event.keydown[SDLK_DELETE] == 1 && stateEvent == EVENT_FOR_EDITOR)
         {
             if(selected == 1 && selection == CUBE_SELECTION)
@@ -594,7 +572,7 @@ int editor(char *mainPath, char *pathModel)
         }
     }
 
-    if(model.member != NULL)
+    if(model.nbMembers != 0)
     {
         freeModel(&model);
     }
@@ -631,14 +609,15 @@ int removeCube(Model *model, int *indexMemberAffected)
 {
     int i;
 
+    free(model->member[(*indexMemberAffected)]);
+    free(model->translation[(*indexMemberAffected)]);
+
     for(i = (*indexMemberAffected); i < model->nbMembers - 1; i++)
     {
         model->member[i] = model->member[i + 1];
         model->translation[i] = model->translation[i + 1];
     }
 
-    free(model->member[model->nbMembers - 1]);
-    free(model->translation[model->nbMembers - 1]);
     model->nbMembers--;
 
     return 1;
@@ -735,49 +714,60 @@ void collisionCursorModel(Model *model, int *indexMemberAffected, int *indexFace
     }
 }
 
-double resizeCube(Model *model, int indexMemberAffected, int indexFaceAffected, int selected)
+double editCube(Model *model, int modeModelisation, int indexMemberAffected, int indexFaceAffected, int selected)
 {
-    int coordResized = -1;
+    int coordEdited = -1;
     int i, j, k;
-    double dimensionResized = 0;
+    double dimensionEdited = 0;
     Point3D tmp;
 
     if(model->member[indexMemberAffected]->face[indexFaceAffected].point[0].x == model->member[indexMemberAffected]->face[indexFaceAffected].point[2].x)
-        coordResized = X;
+        coordEdited = X;
     else if(model->member[indexMemberAffected]->face[indexFaceAffected].point[0].y == model->member[indexMemberAffected]->face[indexFaceAffected].point[2].y)
-        coordResized = Y;
+        coordEdited = Y;
     else if(model->member[indexMemberAffected]->face[indexFaceAffected].point[0].z == model->member[indexMemberAffected]->face[indexFaceAffected].point[2].z)
-        coordResized = Z;
+        coordEdited = Z;
 
-    switch(coordResized)
+    switch(coordEdited)
     {
         case X:
             for(i = 0; i < 4; i++)
             {
-                if(selected)
+                if(modeModelisation == SCULPT_MODE)
                 {
-                    tmp = model->member[indexMemberAffected]->face[indexFaceAffected].point[i];
-                    model->member[indexMemberAffected]->face[indexFaceAffected].point[i].x += event.xrel * 0.005;
+                    dimensionEdited = model->member[indexMemberAffected]->face[indexFaceAffected].point[i].x - model->member[indexMemberAffected]->face[(indexFaceAffected + 2) % 4].point[i].x;
+
+                    if(dimensionEdited < 0)
+                        dimensionEdited *= -1;
+                }
+                else if(modeModelisation == TRANSLATION_MODE)
+                {
+                    dimensionEdited = model->translation[indexMemberAffected]->x;
                 }
 
-                dimensionResized = model->member[indexMemberAffected]->face[indexFaceAffected].point[i].x - model->member[indexMemberAffected]->face[(indexFaceAffected + 2) % 4].point[i].x;
-
-                if(dimensionResized < 0)
-                    dimensionResized *= -1;
-
                 if(selected)
                 {
-                    for(j = 0; j < 6; j++)
+                    if(modeModelisation == SCULPT_MODE)
                     {
-                        for(k = 0; k < 4; k++)
+                        tmp = model->member[indexMemberAffected]->face[indexFaceAffected].point[i];
+                        model->member[indexMemberAffected]->face[indexFaceAffected].point[i].x += event.xrel * 0.005;
+
+                        for(j = 0; j < 6; j++)
                         {
-                            if(model->member[indexMemberAffected]->face[j].point[k].x == tmp.x && model->member[indexMemberAffected]->face[j].point[k].y == tmp.y && model->member[indexMemberAffected]->face[j].point[k].z == tmp.z)
+                            for(k = 0; k < 4; k++)
                             {
-                               model->member[indexMemberAffected]->face[j].point[k].x = model->member[indexMemberAffected]->face[indexFaceAffected].point[i].x;
-                               model->member[indexMemberAffected]->face[j].point[k].y = model->member[indexMemberAffected]->face[indexFaceAffected].point[i].y;
-                               model->member[indexMemberAffected]->face[j].point[k].z = model->member[indexMemberAffected]->face[indexFaceAffected].point[i].z;
+                                if(model->member[indexMemberAffected]->face[j].point[k].x == tmp.x && model->member[indexMemberAffected]->face[j].point[k].y == tmp.y && model->member[indexMemberAffected]->face[j].point[k].z == tmp.z)
+                                {
+                                   model->member[indexMemberAffected]->face[j].point[k].x = model->member[indexMemberAffected]->face[indexFaceAffected].point[i].x;
+                                   model->member[indexMemberAffected]->face[j].point[k].y = model->member[indexMemberAffected]->face[indexFaceAffected].point[i].y;
+                                   model->member[indexMemberAffected]->face[j].point[k].z = model->member[indexMemberAffected]->face[indexFaceAffected].point[i].z;
+                                }
                             }
                         }
+                    }
+                    else if(modeModelisation == TRANSLATION_MODE)
+                    {
+                        model->translation[indexMemberAffected]->x += event.xrel * 0.001;
                     }
                 }
             }
@@ -785,29 +775,41 @@ double resizeCube(Model *model, int indexMemberAffected, int indexFaceAffected, 
         case Y:
             for(i = 0; i < 4; i++)
             {
-                if(selected)
+                if(modeModelisation == SCULPT_MODE)
                 {
-                    tmp = model->member[indexMemberAffected]->face[indexFaceAffected].point[i];
-                    model->member[indexMemberAffected]->face[indexFaceAffected].point[i].y -= event.yrel * 0.005;
+                    dimensionEdited = model->member[indexMemberAffected]->face[4].point[i].y - model->member[indexMemberAffected]->face[5].point[i].y;
+
+                    if(dimensionEdited < 0)
+                        dimensionEdited *= -1;
                 }
-                dimensionResized = model->member[indexMemberAffected]->face[4].point[i].y - model->member[indexMemberAffected]->face[5].point[i].y;
-
-                if(dimensionResized < 0)
-                    dimensionResized *= -1;
+                else if(modeModelisation == TRANSLATION_MODE)
+                {
+                    dimensionEdited = model->translation[indexMemberAffected]->y;
+                }
 
                 if(selected)
                 {
-                    for(j = 0; j < 6; j++)
+                    if(modeModelisation == SCULPT_MODE)
                     {
-                        for(k = 0; k < 4; k++)
+                        tmp = model->member[indexMemberAffected]->face[indexFaceAffected].point[i];
+                        model->member[indexMemberAffected]->face[indexFaceAffected].point[i].y -= event.yrel * 0.005;
+
+                        for(j = 0; j < 6; j++)
                         {
-                            if(model->member[indexMemberAffected]->face[j].point[k].x == tmp.x && model->member[indexMemberAffected]->face[j].point[k].y == tmp.y && model->member[indexMemberAffected]->face[j].point[k].z == tmp.z)
+                            for(k = 0; k < 4; k++)
                             {
-                               model->member[indexMemberAffected]->face[j].point[k].x = model->member[indexMemberAffected]->face[indexFaceAffected].point[i].x;
-                               model->member[indexMemberAffected]->face[j].point[k].y = model->member[indexMemberAffected]->face[indexFaceAffected].point[i].y;
-                               model->member[indexMemberAffected]->face[j].point[k].z = model->member[indexMemberAffected]->face[indexFaceAffected].point[i].z;
+                                if(model->member[indexMemberAffected]->face[j].point[k].x == tmp.x && model->member[indexMemberAffected]->face[j].point[k].y == tmp.y && model->member[indexMemberAffected]->face[j].point[k].z == tmp.z)
+                                {
+                                   model->member[indexMemberAffected]->face[j].point[k].x = model->member[indexMemberAffected]->face[indexFaceAffected].point[i].x;
+                                   model->member[indexMemberAffected]->face[j].point[k].y = model->member[indexMemberAffected]->face[indexFaceAffected].point[i].y;
+                                   model->member[indexMemberAffected]->face[j].point[k].z = model->member[indexMemberAffected]->face[indexFaceAffected].point[i].z;
+                                }
                             }
                         }
+                    }
+                    else if(modeModelisation == TRANSLATION_MODE)
+                    {
+                        model->translation[indexMemberAffected]->y -= event.yrel * 0.001;
                     }
                 }
             }
@@ -815,36 +817,48 @@ double resizeCube(Model *model, int indexMemberAffected, int indexFaceAffected, 
         case Z:
             for(i = 0; i < 4; i++)
             {
-                if(selected)
+                if(modeModelisation == SCULPT_MODE)
                 {
-                    tmp = model->member[indexMemberAffected]->face[indexFaceAffected].point[i];
-                    model->member[indexMemberAffected]->face[indexFaceAffected].point[i].z += event.xrel * 0.005;
+                    dimensionEdited = model->member[indexMemberAffected]->face[indexFaceAffected].point[i].z - model->member[indexMemberAffected]->face[(indexFaceAffected + 2) % 4].point[i].z;
+
+                    if(dimensionEdited < 0)
+                        dimensionEdited *= -1;
                 }
-                dimensionResized = model->member[indexMemberAffected]->face[indexFaceAffected].point[i].z - model->member[indexMemberAffected]->face[(indexFaceAffected + 2) % 4].point[i].z;
-
-                if(dimensionResized < 0)
-                    dimensionResized *= -1;
+                else if(modeModelisation == TRANSLATION_MODE)
+                {
+                    dimensionEdited = model->translation[indexMemberAffected]->z;
+                }
 
                 if(selected)
                 {
-                    for(j = 0; j < 6; j++)
+                    if(modeModelisation == SCULPT_MODE)
                     {
-                        for(k = 0; k < 4; k++)
+                        tmp = model->member[indexMemberAffected]->face[indexFaceAffected].point[i];
+                        model->member[indexMemberAffected]->face[indexFaceAffected].point[i].z += event.xrel * 0.005;
+
+                        for(j = 0; j < 6; j++)
                         {
-                            if(model->member[indexMemberAffected]->face[j].point[k].x == tmp.x && model->member[indexMemberAffected]->face[j].point[k].y == tmp.y && model->member[indexMemberAffected]->face[j].point[k].z == tmp.z)
+                            for(k = 0; k < 4; k++)
                             {
-                               model->member[indexMemberAffected]->face[j].point[k].x = model->member[indexMemberAffected]->face[indexFaceAffected].point[i].x;
-                               model->member[indexMemberAffected]->face[j].point[k].y = model->member[indexMemberAffected]->face[indexFaceAffected].point[i].y;
-                               model->member[indexMemberAffected]->face[j].point[k].z = model->member[indexMemberAffected]->face[indexFaceAffected].point[i].z;
+                                if(model->member[indexMemberAffected]->face[j].point[k].x == tmp.x && model->member[indexMemberAffected]->face[j].point[k].y == tmp.y && model->member[indexMemberAffected]->face[j].point[k].z == tmp.z)
+                                {
+                                   model->member[indexMemberAffected]->face[j].point[k].x = model->member[indexMemberAffected]->face[indexFaceAffected].point[i].x;
+                                   model->member[indexMemberAffected]->face[j].point[k].y = model->member[indexMemberAffected]->face[indexFaceAffected].point[i].y;
+                                   model->member[indexMemberAffected]->face[j].point[k].z = model->member[indexMemberAffected]->face[indexFaceAffected].point[i].z;
+                                }
                             }
                         }
+                    }
+                    else if(modeModelisation == TRANSLATION_MODE)
+                    {
+                        model->translation[indexMemberAffected]->z += event.xrel * 0.001;
                     }
                 }
             }
             break;
     }
 
-    return dimensionResized;
+    return dimensionEdited;
 }
 
 void renderMenuEditor(Model *model, Button *mainButton, Button *editionButton, Button *fileButton, Button *toolButton, Button *textureButton, int buttonsToRender, Texture *textureText, int *weightLetter, Text *buff, Texture *textureEditor, Face *selectionTexture, Text *textDimensionResized)
@@ -892,9 +906,9 @@ void renderMenuEditor(Model *model, Button *mainButton, Button *editionButton, B
         }
     }
 
-    glTranslated(0, 0, 1);
-    drawTexture(&model->tex);
     glTranslated(0, 0, -1);
+    drawTexture(&model->tex);
+    glTranslated(0, 0, 1);
 
     glBegin(GL_QUADS);
     glVertex2d(selectionTexture->point[0].x, selectionTexture->point[0].y);
@@ -1046,4 +1060,32 @@ void reverseTexture(Model *model, int axisReversing, int indexMemberAffected, in
         model->member[indexMemberAffected]->face[indexFaceAffected].point[2].coordFileTexture = model->member[indexMemberAffected]->face[indexFaceAffected].point[3].coordFileTexture;
         model->member[indexMemberAffected]->face[indexFaceAffected].point[3].coordFileTexture = tmp;
     }
+}
+
+int copyCube(Model *model, int indexMemberSelected, Cube *cubeCopied, Point3D *translationCopied)
+{
+    (*cubeCopied) = (*model->member[indexMemberSelected]);
+    (*translationCopied) = (*model->translation[indexMemberSelected]);
+
+    return 1;
+}
+
+int pasteCube(Model *model, Cube *cubeCopied, Point3D *translationCopied)
+{
+    if(model->nbMembers < MEMBERS_MAX)
+    {
+        model->member[model->nbMembers] = malloc(sizeof(Cube));
+        model->translation[model->nbMembers] = malloc(sizeof(Point3D));
+
+        if(model->member[model->nbMembers] != NULL && model->translation[model->nbMembers] != NULL)
+        {
+            (*model->member[model->nbMembers]) = (*cubeCopied);
+            (*model->translation[model->nbMembers]) = (*translationCopied);
+        }
+        model->nbMembers++;
+
+        return 1;
+    }
+
+    return 0;
 }
