@@ -14,7 +14,7 @@
     int collisionCursorTexture(Texture *tex);
     int putTextureOnModel(Model *model, int indexMemberAffected, int indexFaceAffected, Point2D areaTexSelected[2]);
     void reverseTexture(Model *model, int axisReversing, int indexMemberAffected, int indexFaceAffected);
-    int copyCube(Model *model, int indexMemberSelected, Cube *cubeCopied, Point3D *translationCopied);
-    int pasteCube(Model *model, Cube *cubeCopied, Point3D *translationCopied);
+    int copyCube(Model *model, int indexMemberSelected, Cube *cubeCopied, Point3D *translationCopied, Point3D *rotationCopied);
+    int pasteCube(Model *model, Cube *cubeCopied, Point3D *translationCopied, Point3D *rotationCopied);
 
 #endif

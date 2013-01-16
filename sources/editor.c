@@ -37,6 +37,7 @@ int editor(char *mainPath, char *pathModel)
     int copied = 0;
     Cube cubeCopied;
     Point3D translationCopied;
+    Point3D rotationCopied;
 
     double dimensionResized = -1;
     Text textDimensionResized;
@@ -222,17 +223,18 @@ int editor(char *mainPath, char *pathModel)
         }
         if(event.mouse[SDL_BUTTON_LEFT] == 1 && stateEvent == EVENT_FOR_EDITOR && event.posX < textureEditor.pos.x)
         {
-            if(buttonSelected == 0)
-            {
-                selected = 0;
-            }
-
-            if(areaTexSelected[0].x >= 0)
+            if(areaTexSelected[0].x >= 0 && selected == 0)
             {
                 if(indexMemberAffected >= 0 && indexMemberAffected < model.nbMembers && indexFaceAffected >= 0 && indexFaceAffected < 6 && selection == FACE_SELECTION && areaTexSelected[0].x != -1)
                 {
                     putTextureOnModel(&model, indexMemberAffected, indexFaceAffected, areaTexSelected);
                 }
+            }
+
+            if(buttonSelected == 0)
+            {
+                selected = 0;
+                event.mouse[SDL_BUTTON_LEFT] = 0;
             }
         }
 
@@ -320,7 +322,7 @@ int editor(char *mainPath, char *pathModel)
             {
                 if(selected == 1 && selection == CUBE_SELECTION)
                 {
-                    copyCube(&model, indexMemberAffected, &cubeCopied, &translationCopied);
+                    copyCube(&model, indexMemberAffected, &cubeCopied, &translationCopied, &rotationCopied);
                     copied = 1;
                 }
                 event.mouse[SDL_BUTTON_LEFT] = 0;
@@ -331,7 +333,7 @@ int editor(char *mainPath, char *pathModel)
             {
                 if(copied == 1)
                 {
-                    pasteCube(&model, &cubeCopied, &translationCopied);
+                    pasteCube(&model, &cubeCopied, &translationCopied, &rotationCopied);
                 }
                 event.mouse[SDL_BUTTON_LEFT] = 0;
                 event.keydown[SDLK_v] = 0;
@@ -546,11 +548,23 @@ int editor(char *mainPath, char *pathModel)
             }
             else if(indexMemberAffected >= 0 && indexMemberAffected < model.nbMembers && indexFaceAffected >= 0 && indexFaceAffected < 6 && selection == CUBE_SELECTION)
             {
-                for(i = 0; i < 6; i++)
+                if(model.member[indexMemberAffected]->face[indexFaceAffected].point[0].coordFileTexture.x == -1)
                 {
-                    model.member[indexMemberAffected]->face[i].color.r = i * 20 + 50;
-                    model.member[indexMemberAffected]->face[i].color.v = i * 20 + 50;
-                    model.member[indexMemberAffected]->face[i].color.b = i * 20 + 50;
+                    for(i = 0; i < 6; i++)
+                    {
+                        model.member[indexMemberAffected]->face[i].color.r = i * 20 + 50;
+                        model.member[indexMemberAffected]->face[i].color.v = i * 20 + 50;
+                        model.member[indexMemberAffected]->face[i].color.b = i * 20 + 50;
+                    }
+                }
+                else
+                {
+                    for(i = 0; i < 6; i++)
+                    {
+                        model.member[indexMemberAffected]->face[i].color.r = 255;
+                        model.member[indexMemberAffected]->face[i].color.v = 255;
+                        model.member[indexMemberAffected]->face[i].color.b = 255;
+                    }
                 }
             }
 
@@ -592,7 +606,8 @@ int addCube(Model *model)
     {
         model->member[model->nbMembers] = malloc(sizeof(Cube));
         model->translation[model->nbMembers] = malloc(sizeof(Point3D));
-        if(model->member[model->nbMembers] == NULL)
+        model->rotation[model->nbMembers] = malloc(sizeof(Point3D));
+        if(model->member[model->nbMembers] == NULL || model->translation[model->nbMembers] == NULL || model->rotation[model->nbMembers] == NULL)
         {
             printf("Error allocating memory\n");
         }
@@ -601,6 +616,10 @@ int addCube(Model *model)
         model->translation[model->nbMembers - 1]->x = 0;
         model->translation[model->nbMembers - 1]->y = 0;
         model->translation[model->nbMembers - 1]->z = 0;
+
+        model->rotation[model->nbMembers - 1]->x = 0;
+        model->rotation[model->nbMembers - 1]->y = 0;
+        model->rotation[model->nbMembers - 1]->z = 0;
     }
     return 1;
 }
@@ -611,11 +630,13 @@ int removeCube(Model *model, int *indexMemberAffected)
 
     free(model->member[(*indexMemberAffected)]);
     free(model->translation[(*indexMemberAffected)]);
+    free(model->rotation[(*indexMemberAffected)]);
 
     for(i = (*indexMemberAffected); i < model->nbMembers - 1; i++)
     {
         model->member[i] = model->member[i + 1];
         model->translation[i] = model->translation[i + 1];
+        model->rotation[i] = model->rotation[i + 1];
     }
 
     model->nbMembers--;
@@ -767,7 +788,7 @@ double editCube(Model *model, int modeModelisation, int indexMemberAffected, int
                     }
                     else if(modeModelisation == TRANSLATION_MODE)
                     {
-                        model->translation[indexMemberAffected]->x += event.xrel * 0.001;
+                        model->translation[indexMemberAffected]->x += event.xrel * 0.0005;
                     }
                 }
             }
@@ -809,7 +830,7 @@ double editCube(Model *model, int modeModelisation, int indexMemberAffected, int
                     }
                     else if(modeModelisation == TRANSLATION_MODE)
                     {
-                        model->translation[indexMemberAffected]->y -= event.yrel * 0.001;
+                        model->translation[indexMemberAffected]->y -= event.yrel * 0.0005;
                     }
                 }
             }
@@ -851,7 +872,7 @@ double editCube(Model *model, int modeModelisation, int indexMemberAffected, int
                     }
                     else if(modeModelisation == TRANSLATION_MODE)
                     {
-                        model->translation[indexMemberAffected]->z += event.xrel * 0.001;
+                        model->translation[indexMemberAffected]->z += event.xrel * 0.0005;
                     }
                 }
             }
@@ -1062,25 +1083,28 @@ void reverseTexture(Model *model, int axisReversing, int indexMemberAffected, in
     }
 }
 
-int copyCube(Model *model, int indexMemberSelected, Cube *cubeCopied, Point3D *translationCopied)
+int copyCube(Model *model, int indexMemberSelected, Cube *cubeCopied, Point3D *translationCopied, Point3D *rotationCopied)
 {
     (*cubeCopied) = (*model->member[indexMemberSelected]);
     (*translationCopied) = (*model->translation[indexMemberSelected]);
+    (*rotationCopied) = (*model->rotation[indexMemberSelected]);
 
     return 1;
 }
 
-int pasteCube(Model *model, Cube *cubeCopied, Point3D *translationCopied)
+int pasteCube(Model *model, Cube *cubeCopied, Point3D *translationCopied, Point3D *rotationCopied)
 {
     if(model->nbMembers < MEMBERS_MAX)
     {
         model->member[model->nbMembers] = malloc(sizeof(Cube));
         model->translation[model->nbMembers] = malloc(sizeof(Point3D));
+        model->rotation[model->nbMembers] = malloc(sizeof(Point3D));
 
-        if(model->member[model->nbMembers] != NULL && model->translation[model->nbMembers] != NULL)
+        if(model->member[model->nbMembers] != NULL && model->translation[model->nbMembers] != NULL && model->rotation[model->nbMembers] != NULL)
         {
             (*model->member[model->nbMembers]) = (*cubeCopied);
             (*model->translation[model->nbMembers]) = (*translationCopied);
+            (*model->rotation[model->nbMembers]) = (*rotationCopied);
         }
         model->nbMembers++;
 

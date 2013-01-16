@@ -116,6 +116,7 @@
         int init;
         Cube *member[MEMBERS_MAX];
         Point3D *translation[MEMBERS_MAX];
+        Point3D *rotation[MEMBERS_MAX];
         Texture tex;
         int saved;
     };

@@ -73,8 +73,9 @@ int loadModel(char *mainPath, char *path, Model *model)
         {
             model->member[i] = malloc(sizeof(Cube));
             model->translation[i] = malloc(sizeof(Point3D));
+            model->rotation[i] = malloc(sizeof(Point3D));
 
-            if(model->member[i] == NULL || model->translation[i] == NULL)
+            if(model->member[i] == NULL || model->translation[i] == NULL || model->rotation[i] == NULL)
             {
                 printf("Error allocating memory\n");
                 return 0;
@@ -85,6 +86,7 @@ int loadModel(char *mainPath, char *path, Model *model)
         {
             fscanf(file, "Member %d\n", &i);
             fscanf(file, "Translation : %f %f %f\n", &model->translation[i]->x, &model->translation[i]->y, &model->translation[i]->z);
+            fscanf(file, "Rotation : %f %f %f\n", &model->rotation[i]->x, &model->rotation[i]->y, &model->rotation[i]->z);
             for(j = 0; j < 6; j++)
             {
                 fscanf(file, "face %d :\n", &j);
@@ -127,6 +129,7 @@ int saveModel(char *path, Model *model)
     {
         fprintf(file, "Member %d\n", i);
         fprintf(file, "Translation : %f %f %f\n", model->translation[i]->x, model->translation[i]->y, model->translation[i]->z);
+        fprintf(file, "Rotation : %f %f %f\n", model->rotation[i]->x, model->rotation[i]->y, model->rotation[i]->z);
         for(j = 0; j < 6; j++)
         {
             fprintf(file, "face %d :\n", j);
@@ -152,6 +155,7 @@ int freeModel(Model *model)
     {
         free(model->member[i]);
         free(model->translation[i]);
+        free(model->rotation[i]);
     }
 
     model->nbMembers = 0;
@@ -171,7 +175,10 @@ int renderModel(Model *model, int mode)
     for(i = 0; i < model->nbMembers; i++)
     {
         glPushMatrix();
-        glTranslated(model->translation[i]->x, model->translation[i]->y, model->translation[i]->z);
+        glTranslatef(model->translation[i]->x, model->translation[i]->y, model->translation[i]->z);
+        glRotated(model->rotation[i]->x, 1, 0, 0);
+        glRotated(model->rotation[i]->y, 0, 1, 0);
+        glRotated(model->rotation[i]->z, 0, 0, 1);
 
         for(j = 0; j < 6; j++)
         {
