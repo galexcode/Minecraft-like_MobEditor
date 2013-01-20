@@ -18,6 +18,7 @@
     #include <errno.h>
 
     #define MEMBERS_MAX 100
+    #define ANIMS_MAX 10
     #define NUMBER_MAIN_BUTTONS 4
     #define NUMBER_EDITION_BUTTONS 3
     #define NUMBER_FILE_BUTTONS 3
@@ -35,6 +36,7 @@
     enum{MODELS, TEXTURES};
     enum{MAIN_BUTTONS, FILE_BUTTONS, EDITION_BUTTONS, TOOL_BUTTONS, TEXTURE_BUTTONS};
     enum{SCULPT_MODE, TRANSLATION_MODE};
+    enum{CLIC_AND_SLIDE, CLIC_SLIDE_CLIC};
 
     int quitSDL();
     int initOpenGL();
@@ -109,6 +111,15 @@
         Text text;
     };
 
+    typedef struct Animation Animation;
+    struct Animation
+    {
+        int *indexMemberAffected;
+        float *minimalValue;
+        float *maximalValue;
+        char animationName[128];
+    };
+
     typedef struct Model Model;
     struct Model
     {
@@ -117,6 +128,7 @@
         Cube *member[MEMBERS_MAX];
         Point3D *translation[MEMBERS_MAX];
         Point3D *rotation[MEMBERS_MAX];
+        Animation *animation[ANIMS_MAX];
         Texture tex;
         int saved;
     };

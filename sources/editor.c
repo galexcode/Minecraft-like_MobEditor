@@ -33,6 +33,7 @@ int editor(char *mainPath, char *pathModel)
     int axisReversing = X_AXIS;
     int modeModelisation = SCULPT_MODE;
     int buttonsToRender = MAIN_BUTTONS;
+    int modeSculpting = CLIC_AND_SLIDE;
 
     int copied = 0;
     Cube cubeCopied;
@@ -40,6 +41,7 @@ int editor(char *mainPath, char *pathModel)
     Point3D rotationCopied;
 
     double dimensionResized = -1;
+    double oldDimensionResized = -1;
     Text textDimensionResized;
 
     Point3D pos, target;
@@ -137,22 +139,16 @@ int editor(char *mainPath, char *pathModel)
 
         for(i = 0; i < NUMBER_MAIN_BUTTONS; i++)
         {
-            if(selected == 0)
-            {
-                buttonCollision(&mainButton[i]);
-                buttonSelected = 1;
-            }
+            buttonCollision(&mainButton[i]);
+            buttonSelected = 1;
         }
 
         if(buttonsToRender == FILE_BUTTONS)
         {
             for(i = 0; i < NUMBER_FILE_BUTTONS; i++)
             {
-                if(selected == 0)
-                {
-                    buttonCollision(&fileButton[i]);
-                    buttonSelected = 1;
-                }
+                buttonCollision(&fileButton[i]);
+                buttonSelected = 1;
             }
         }
 
@@ -209,17 +205,41 @@ int editor(char *mainPath, char *pathModel)
             if(zoomModel < 1)
                 zoomModel = 1;
         }
+        if(oldDimensionResized != dimensionResized && event.mouse[SDL_BUTTON_RIGHT] == 1)
+        {
+            modeSculpting = CLIC_AND_SLIDE;
+        }
+        if(event.mouse[SDL_BUTTON_RIGHT] == 0 && stateEvent == EVENT_FOR_EDITOR && event.posX < textureEditor.pos.x)
+        {
+            if(selected == 1 && modeSculpting == CLIC_AND_SLIDE)
+            {
+                if(oldDimensionResized != dimensionResized)
+                {
+                    selected = 0;
+                    oldDimensionResized = dimensionResized;
+                    modeSculpting = CLIC_SLIDE_CLIC;
+                }
+                else
+                {
+                    modeSculpting = CLIC_SLIDE_CLIC;
+                }
+            }
+        }
         if(event.mouse[SDL_BUTTON_RIGHT] == 1 && stateEvent == EVENT_FOR_EDITOR && event.posX < textureEditor.pos.x)
         {
-            if(selected == 1)
+            if(selected != 1 && indexMemberAffected >= 0 && indexMemberAffected < model.nbMembers && indexFaceAffected >= 0 && indexFaceAffected < 6)
             {
-                selected = 0;
-            }
-            else if(indexMemberAffected >= 0 && indexMemberAffected < model.nbMembers && indexFaceAffected >= 0 && indexFaceAffected < 6)
-            {
+                modeSculpting = CLIC_AND_SLIDE;
+                oldDimensionResized = dimensionResized;
                 selected = 1;
             }
-            event.mouse[SDL_BUTTON_RIGHT] = 0;
+
+            if(selected == 1 && modeSculpting == CLIC_SLIDE_CLIC)
+            {
+                selected = 0;
+                oldDimensionResized = dimensionResized;
+                event.mouse[SDL_BUTTON_RIGHT] = 0;
+            }
         }
         if(event.mouse[SDL_BUTTON_LEFT] == 1 && stateEvent == EVENT_FOR_EDITOR && event.posX < textureEditor.pos.x)
         {
@@ -788,7 +808,7 @@ double editCube(Model *model, int modeModelisation, int indexMemberAffected, int
                     }
                     else if(modeModelisation == TRANSLATION_MODE)
                     {
-                        model->translation[indexMemberAffected]->x += event.xrel * 0.0005;
+                        model->translation[indexMemberAffected]->x += event.xrel * 0.00125;
                     }
                 }
             }
@@ -830,7 +850,7 @@ double editCube(Model *model, int modeModelisation, int indexMemberAffected, int
                     }
                     else if(modeModelisation == TRANSLATION_MODE)
                     {
-                        model->translation[indexMemberAffected]->y -= event.yrel * 0.0005;
+                        model->translation[indexMemberAffected]->y -= event.yrel * 0.00125;
                     }
                 }
             }
@@ -872,7 +892,7 @@ double editCube(Model *model, int modeModelisation, int indexMemberAffected, int
                     }
                     else if(modeModelisation == TRANSLATION_MODE)
                     {
-                        model->translation[indexMemberAffected]->z += event.xrel * 0.0005;
+                        model->translation[indexMemberAffected]->z += event.xrel * 0.00125;
                     }
                 }
             }

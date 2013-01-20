@@ -1,5 +1,6 @@
 #include "constants.h"
 #include "model.h"
+#include "animations.h"
 #include "render.h"
 #include "sdlglutils.h"
 
