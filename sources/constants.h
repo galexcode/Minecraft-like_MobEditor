@@ -21,7 +21,7 @@
     #define ANIMS_MAX 10
     #define NUMBER_MAIN_BUTTONS 4
     #define NUMBER_EDITION_BUTTONS 3
-    #define NUMBER_FILE_BUTTONS 3
+    #define NUMBER_FILE_BUTTONS 4
     #define NUMBER_TOOL_BUTTONS 3
     #define NUMBER_TEXTURE_BUTTONS 3
     #define SIZE_PATH_MAX 512
@@ -37,6 +37,7 @@
     enum{MAIN_BUTTONS, FILE_BUTTONS, EDITION_BUTTONS, TOOL_BUTTONS, TEXTURE_BUTTONS};
     enum{SCULPT_MODE, TRANSLATION_MODE};
     enum{CLIC_AND_SLIDE, CLIC_SLIDE_CLIC};
+    enum{TRANSLATION_ANIMATION, ROTATION_ANIMATION};
 
     int quitSDL();
     int initOpenGL();
@@ -117,6 +118,8 @@
         int *indexMemberAffected;
         float *minimalValue;
         float *maximalValue;
+        int *period;
+        int typeAnimation;
         char animationName[128];
     };
 

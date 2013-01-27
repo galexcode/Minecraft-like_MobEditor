@@ -33,9 +33,9 @@ void drawFace(Face *face, int mode)
     {
         if(face->point[i].coordFileTexture.x != (double)-1 && mode == RENDER_MODE)
         {
-            glTexCoord2d(face->point[i].coordFileTexture.x, face->point[i].coordFileTexture.y);
+            glTexCoord2f(face->point[i].coordFileTexture.x, face->point[i].coordFileTexture.y);
         }
-        glVertex3d(face->point[i].x, face->point[i].y, face->point[i].z);
+        glVertex3f(face->point[i].x, face->point[i].y, face->point[i].z);
     }
     glEnd();
 

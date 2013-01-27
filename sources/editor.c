@@ -7,6 +7,7 @@
 #include "button.h"
 #include "text.h"
 #include "tools.h"
+#include "animations.h"
 
 extern Input event;
 extern int windowWidth;
@@ -317,9 +318,11 @@ int editor(char *mainPath, char *pathModel)
             }
             if(fileButton[1].selected == 1 && event.mouse[SDL_BUTTON_LEFT] == 1 && stateEvent == EVENT_FOR_EDITOR)
             {
-                saveModel(pathModel, &model);
-                model.saved = 1;
-                addStringToText(&fileButton[1].text, "Saved");
+                if(saveModel(pathModel, &model))
+                {
+                    model.saved = 1;
+                    addStringToText(&fileButton[1].text, "Saved");
+                }
                 event.mouse[SDL_BUTTON_LEFT] = 0;
             }
             if(fileButton[2].selected == 1 && event.mouse[SDL_BUTTON_LEFT] == 1 && stateEvent == EVENT_FOR_EDITOR)
@@ -327,11 +330,21 @@ int editor(char *mainPath, char *pathModel)
                 if(openBrowser(buff.string, MODELS))
                 {
                     sprintf(pathModel, buff.string);
-                    saveModel(buff.string, &model);
-                    model.saved = 1;
+                    if(saveModel(buff.string, &model))
+                    {
+                        model.saved = 1;
+                        addStringToText(&fileButton[1].text, "Saved");
+                    }
                 }
 
-                addStringToText(&fileButton[1].text, "Saved");
+                event.mouse[SDL_BUTTON_LEFT] = 0;
+            }
+            if(fileButton[3].selected == 1 && event.mouse[SDL_BUTTON_LEFT] == 1 && stateEvent == EVENT_FOR_EDITOR)
+            {
+                if(editAnimations(&model) == 0)
+                {
+                    leave = 1;
+                }
                 event.mouse[SDL_BUTTON_LEFT] = 0;
             }
         }
@@ -363,7 +376,10 @@ int editor(char *mainPath, char *pathModel)
                 if(modeModelisation == SCULPT_MODE)
                 {
                     modeModelisation = TRANSLATION_MODE;
+                    selection = FACE_SELECTION;
                     addStringToText(&editionButton[2].text, "Translation Mode");
+                    addStringToText(&toolButton[2].text, "Selection : Face");
+                    selected = 0;
                 }
                 else
                 {
@@ -413,11 +429,13 @@ int editor(char *mainPath, char *pathModel)
                 {
                     addStringToText(&toolButton[2].text, "Selection : Cube");
                     selection = CUBE_SELECTION;
+                    selected = 0;
                 }
                 else if(selection == CUBE_SELECTION)
                 {
                     addStringToText(&toolButton[2].text, "Selection : Face");
                     selection = FACE_SELECTION;
+                    selected = 0;
                 }
                 event.mouse[SDL_BUTTON_LEFT] = 0;
             }
@@ -965,6 +983,8 @@ void renderMenuEditor(Model *model, Button *mainButton, Button *editionButton, B
 
 int moveAndResizeTexture(Texture *tex, double *zoom, int xMin, int *differenceEventX, int *differenceEventY)
 {
+    int tmp;
+
     if(collisionCursorTexture(tex))
     {
         if(event.mouse[SDL_BUTTON_WHEELDOWN] == 1)
@@ -991,12 +1011,19 @@ int moveAndResizeTexture(Texture *tex, double *zoom, int xMin, int *differenceEv
                 (*differenceEventY) = event.posY - tex->pos.y;
             }
 
-            tex->pos.x = event.posX - (*differenceEventX);
+            tmp = tex->weight;
+            tex->weight = (*zoom) * (double)tex->wMax;
+            tex->posTex[0].x = 0;
+
+            tex->pos.x = event.posX - (*differenceEventX) - tex->weight + tmp;
             tex->pos.y = event.posY - (*differenceEventY);
 
-            if(tex->pos.x <= xMin)
+            if(tex->pos.x < xMin || tex->weight < 16)
             {
+                tex->weight = tex->weight - (xMin - tex->pos.x);
+                tex->posTex[0].x = ((*zoom) * (double)tex->wMax - tex->weight) / ((*zoom) * (double)tex->wMax);
                 tex->pos.x = xMin;
+                (*differenceEventX) = event.posX - tex->pos.x;
             }
         }
         else
@@ -1033,8 +1060,8 @@ int selectAreaTex(Texture *tex, Point2D coordsArea[2], int *selectioning)
             }
             if((*selectioning == 1 && event.mouse[SDL_BUTTON_LEFT] == 1))
             {
-                coordsArea[1].x = ((event.posX - tex->pos.x) * tex->wMax) / tex->weight;
-                coordsArea[1].y = ((event.posY - tex->pos.y) * tex->hMax) / tex->height;
+                coordsArea[1].x = ((event.posX - tex->pos.x) * tex->wMax) / tex->weight + 1;
+                coordsArea[1].y = ((event.posY - tex->pos.y) * tex->hMax) / tex->height + 1;
             }
         }
         if(event.mouse[SDL_BUTTON_LEFT] == 0)

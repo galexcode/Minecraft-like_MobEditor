@@ -247,6 +247,12 @@ void attribFileButtons(Button *button, Texture *texButton)
     button[2].pos.x = button[0].pos.x;
     button[2].pos.y = button[1].pos.y + button[1].height + 5;
     addStringToText(&button[2].text, "Save As ...");
+
+    button[3].height = 40;
+    button[3].weight = 150;
+    button[3].pos.x = button[0].pos.x;
+    button[3].pos.y = button[2].pos.y + button[2].height + 5;
+    addStringToText(&button[3].text, "Animate Model");
 }
 
 void attribToolButtons(Button *button, Texture *texButton)
