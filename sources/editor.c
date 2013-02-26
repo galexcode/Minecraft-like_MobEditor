@@ -26,6 +26,7 @@ int editor(char *mainPath, char *pathModel)
     Point2D areaTexSelected[2];
     int selectioningTex = 0;
     Text buff;
+    int resizingAreaTexture = 0;
     int selected = 0;
     int buttonSelected = 0;
     int weightLetter[256];
@@ -60,11 +61,11 @@ int editor(char *mainPath, char *pathModel)
 
     buff.shadow = 1;
 
-    mainButton = malloc(NUMBER_MAIN_BUTTONS * sizeof(Button));
-    editionButton = malloc(NUMBER_EDITION_BUTTONS * sizeof(Button));
-    fileButton = malloc(NUMBER_FILE_BUTTONS * sizeof(Button));
-    toolButton = malloc(NUMBER_TOOL_BUTTONS * sizeof(Button));
-    textureButton = malloc(NUMBER_TEXTURE_BUTTONS * sizeof(Button));
+    mainButton = malloc(NUMBER_MAIN_BUTTONS_EDITOR * sizeof(Button));
+    editionButton = malloc(NUMBER_EDITION_BUTTONS_EDITOR * sizeof(Button));
+    fileButton = malloc(NUMBER_FILE_BUTTONS_EDITOR * sizeof(Button));
+    toolButton = malloc(NUMBER_TOOL_BUTTONS_EDITOR * sizeof(Button));
+    textureButton = malloc(NUMBER_TEXTURE_BUTTONS_EDITOR * sizeof(Button));
 
     if(mainButton == NULL || editionButton == NULL || fileButton == NULL || toolButton == NULL || textureButton == NULL)
     {
@@ -91,11 +92,11 @@ int editor(char *mainPath, char *pathModel)
     textureEditor.pos.x = windowWidth - textureEditor.weight - 1;
     textureEditor.pos.y = 0;
 
-    attribMainButtons(mainButton, &texButton);
-    attribEditionButtons(editionButton, &texButton);
-    attribFileButtons(fileButton, &texButton);
-    attribToolButtons(toolButton, &texButton);
-    attribTextureButtons(textureButton, &texButton);
+    attribMainButtonsEditor(mainButton, &texButton);
+    attribEditionButtonsEditor(editionButton, &texButton);
+    attribFileButtonsEditor(fileButton, &texButton);
+    attribToolButtonsEditor(toolButton, &texButton);
+    attribTextureButtonsEditor(textureButton, &texButton);
 
     selectionTexture.point[0].z = 0;
     selectionTexture.point[1].z = 0;
@@ -138,7 +139,7 @@ int editor(char *mainPath, char *pathModel)
             event.keydown[SDLK_ESCAPE] = 0;
         }
 
-        for(i = 0; i < NUMBER_MAIN_BUTTONS; i++)
+        for(i = 0; i < NUMBER_MAIN_BUTTONS_EDITOR; i++)
         {
             buttonCollision(&mainButton[i]);
             buttonSelected = 1;
@@ -146,7 +147,7 @@ int editor(char *mainPath, char *pathModel)
 
         if(buttonsToRender == FILE_BUTTONS)
         {
-            for(i = 0; i < NUMBER_FILE_BUTTONS; i++)
+            for(i = 0; i < NUMBER_FILE_BUTTONS_EDITOR; i++)
             {
                 buttonCollision(&fileButton[i]);
                 buttonSelected = 1;
@@ -155,7 +156,7 @@ int editor(char *mainPath, char *pathModel)
 
         if(buttonsToRender == EDITION_BUTTONS)
         {
-            for(i = 0; i < NUMBER_EDITION_BUTTONS; i++)
+            for(i = 0; i < NUMBER_EDITION_BUTTONS_EDITOR; i++)
             {
                 buttonCollision(&editionButton[i]);
                 buttonSelected = 1;
@@ -164,7 +165,7 @@ int editor(char *mainPath, char *pathModel)
 
         if(buttonsToRender == TOOL_BUTTONS)
         {
-            for(i = 0; i < NUMBER_TOOL_BUTTONS; i++)
+            for(i = 0; i < NUMBER_TOOL_BUTTONS_EDITOR; i++)
             {
                 buttonCollision(&toolButton[i]);
                 buttonSelected = 1;
@@ -173,11 +174,36 @@ int editor(char *mainPath, char *pathModel)
 
         if(buttonsToRender == TEXTURE_BUTTONS)
         {
-            for(i = 0; i < NUMBER_TEXTURE_BUTTONS; i++)
+            for(i = 0; i < NUMBER_TEXTURE_BUTTONS_EDITOR; i++)
             {
                 buttonCollision(&textureButton[i]);
                 buttonSelected = 1;
             }
+        }
+
+        if(event.mouse[SDL_BUTTON_LEFT] == 1 && ((event.posX >= textureEditor.pos.x && event.posX <= textureEditor.pos.x + 7) || resizingAreaTexture))
+        {
+            if(differenceEventX == -1)
+            {
+                differenceEventX = event.posX - textureEditor.pos.x;
+            }
+            resizingAreaTexture = 1;
+            textureEditor.pos.x = event.posX - differenceEventX;
+            if(textureEditor.pos.x < windowWidth / 2)
+            {
+                textureEditor.pos.x = windowWidth / 2;
+            }
+            if(textureEditor.pos.x > windowWidth - 10)
+            {
+                textureEditor.pos.x = windowWidth - 10;
+            }
+            textureEditor.weight = windowWidth - textureEditor.pos.x;
+        }
+
+        if(event.mouse[SDL_BUTTON_LEFT] == 0 && resizingAreaTexture == 1)
+        {
+            differenceEventX = -1;
+            resizingAreaTexture = 0;
         }
 
         if(event.mouse[SDL_BUTTON_MIDDLE] == 1 && stateEvent == EVENT_FOR_EDITOR)
@@ -341,7 +367,7 @@ int editor(char *mainPath, char *pathModel)
             }
             if(fileButton[3].selected == 1 && event.mouse[SDL_BUTTON_LEFT] == 1 && stateEvent == EVENT_FOR_EDITOR)
             {
-                if(editAnimations(&model) == 0)
+                if(editAnimations(&model, &texText, weightLetter, &texButton) == 0)
                 {
                     leave = 1;
                 }
@@ -502,7 +528,7 @@ int editor(char *mainPath, char *pathModel)
             SDL_EnableUNICODE(0);
             event.keydown[SDLK_ESCAPE] = 0;
 
-            for(i = 0; i < NUMBER_MAIN_BUTTONS; i++)
+            for(i = 0; i < NUMBER_MAIN_BUTTONS_EDITOR; i++)
             {
                 mainButton[i].textInput = 0;
             }
@@ -510,7 +536,7 @@ int editor(char *mainPath, char *pathModel)
 
         if(model.tex.IDtex != 0 && event.posX >= textureEditor.pos.x && stateEvent == EVENT_FOR_EDITOR)
         {
-            moveAndResizeTexture(&model.tex, &zoomTexEditor, textureEditor.pos.x, &differenceEventX, &differenceEventY);
+            moveAndResizeTexture(&model.tex, &zoomTexEditor, &differenceEventX, &differenceEventY);
             selectAreaTex(&model.tex, areaTexSelected, &selectioningTex);
             areaTexSelected[0].x = (int)areaTexSelected[0].x;
             areaTexSelected[0].y = (int)areaTexSelected[0].y;
@@ -624,16 +650,19 @@ int editor(char *mainPath, char *pathModel)
         }
     }
 
-    if(model.nbMembers != 0)
-    {
-        freeModel(&model);
-    }
+    printf("aa\n");
+    fflush(stdout);
+    freeModel(&model);
+    printf("bb\n");
+    fflush(stdout);
 
     free(mainButton);
     free(editionButton);
     free(fileButton);
     free(toolButton);
     free(textureButton);
+    printf("cc\n");
+    fflush(stdout);
 
     return 1;
 }
@@ -928,14 +957,14 @@ void renderMenuEditor(Model *model, Button *mainButton, Button *editionButton, B
     glTranslated(0, 0, -100);
     drawTexture(textureEditor);
 
-    for(i = 0; i < NUMBER_MAIN_BUTTONS; i++)
+    for(i = 0; i < NUMBER_MAIN_BUTTONS_EDITOR; i++)
     {
         renderButton(&mainButton[i], textureText, weightLetter, buff);
     }
 
     if(buttonsToRender == EDITION_BUTTONS)
     {
-        for(i = 0; i < NUMBER_EDITION_BUTTONS; i++)
+        for(i = 0; i < NUMBER_EDITION_BUTTONS_EDITOR; i++)
         {
             renderButton(&editionButton[i], textureText, weightLetter, buff);
         }
@@ -943,7 +972,7 @@ void renderMenuEditor(Model *model, Button *mainButton, Button *editionButton, B
 
     if(buttonsToRender == FILE_BUTTONS)
     {
-        for(i = 0; i < NUMBER_FILE_BUTTONS; i++)
+        for(i = 0; i < NUMBER_FILE_BUTTONS_EDITOR; i++)
         {
             renderButton(&fileButton[i], textureText, weightLetter, buff);
         }
@@ -951,7 +980,7 @@ void renderMenuEditor(Model *model, Button *mainButton, Button *editionButton, B
 
     if(buttonsToRender == TOOL_BUTTONS)
     {
-        for(i = 0; i < NUMBER_TOOL_BUTTONS; i++)
+        for(i = 0; i < NUMBER_TOOL_BUTTONS_EDITOR; i++)
         {
             renderButton(&toolButton[i], textureText, weightLetter, buff);
         }
@@ -959,11 +988,14 @@ void renderMenuEditor(Model *model, Button *mainButton, Button *editionButton, B
 
     if(buttonsToRender == TEXTURE_BUTTONS)
     {
-        for(i = 0; i < NUMBER_TEXTURE_BUTTONS; i++)
+        for(i = 0; i < NUMBER_TEXTURE_BUTTONS_EDITOR; i++)
         {
             renderButton(&textureButton[i], textureText, weightLetter, buff);
         }
     }
+
+    glEnable(GL_SCISSOR_TEST);
+    glScissor(textureEditor->pos.x + 8, textureEditor->pos.y, textureEditor->weight - 8, textureEditor->height);
 
     glTranslated(0, 0, -1);
     drawTexture(&model->tex);
@@ -976,16 +1008,16 @@ void renderMenuEditor(Model *model, Button *mainButton, Button *editionButton, B
     glVertex2d(selectionTexture->point[0].x, selectionTexture->point[1].y);
     glEnd();
 
+    glDisable(GL_SCISSOR_TEST);
+
     writeText(textureText, *textDimensionResized, weightLetter, textureEditor->pos.x - 100, windowHeight - 20);
 
     glPopMatrix();
 }
 
-int moveAndResizeTexture(Texture *tex, double *zoom, int xMin, int *differenceEventX, int *differenceEventY)
+int moveAndResizeTexture(Texture *tex, double *zoom, int *differenceEventX, int *differenceEventY)
 {
-    int tmp;
-
-    if(collisionCursorTexture(tex))
+    if(collisionCursorTexture(tex) || (*differenceEventY) != -1)
     {
         if(event.mouse[SDL_BUTTON_WHEELDOWN] == 1)
         {
@@ -1011,20 +1043,8 @@ int moveAndResizeTexture(Texture *tex, double *zoom, int xMin, int *differenceEv
                 (*differenceEventY) = event.posY - tex->pos.y;
             }
 
-            tmp = tex->weight;
-            tex->weight = (*zoom) * (double)tex->wMax;
-            tex->posTex[0].x = 0;
-
-            tex->pos.x = event.posX - (*differenceEventX) - tex->weight + tmp;
+            tex->pos.x = event.posX - (*differenceEventX);
             tex->pos.y = event.posY - (*differenceEventY);
-
-            if(tex->pos.x < xMin || tex->weight < 16)
-            {
-                tex->weight = tex->weight - (xMin - tex->pos.x);
-                tex->posTex[0].x = ((*zoom) * (double)tex->wMax - tex->weight) / ((*zoom) * (double)tex->wMax);
-                tex->pos.x = xMin;
-                (*differenceEventX) = event.posX - tex->pos.x;
-            }
         }
         else
         {

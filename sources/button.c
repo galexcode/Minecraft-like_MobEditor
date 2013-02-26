@@ -159,11 +159,11 @@ void buttonCollision(Button *button)
     }
 }
 
-void attribMainButtons(Button *button, Texture *texButton)
+void attribMainButtonsEditor(Button *button, Texture *texButton)
 {
     int i;
 
-    for(i = 0; i < NUMBER_MAIN_BUTTONS; i++)
+    for(i = 0; i < NUMBER_MAIN_BUTTONS_EDITOR; i++)
     {
         initButton(&button[i], texButton);
     }
@@ -193,11 +193,11 @@ void attribMainButtons(Button *button, Texture *texButton)
     addStringToText(&button[3].text, "Texture");
 }
 
-void attribEditionButtons(Button *button, Texture *texButton)
+void attribEditionButtonsEditor(Button *button, Texture *texButton)
 {
     int i;
 
-    for(i = 0; i < NUMBER_TEXTURE_BUTTONS; i++)
+    for(i = 0; i < NUMBER_TEXTURE_BUTTONS_EDITOR; i++)
     {
         initButton(&button[i], texButton);
     }
@@ -221,11 +221,11 @@ void attribEditionButtons(Button *button, Texture *texButton)
     addStringToText(&button[2].text, "Sculpt Mode");
 }
 
-void attribFileButtons(Button *button, Texture *texButton)
+void attribFileButtonsEditor(Button *button, Texture *texButton)
 {
     int i;
 
-    for(i = 0; i < NUMBER_FILE_BUTTONS; i++)
+    for(i = 0; i < NUMBER_FILE_BUTTONS_EDITOR; i++)
     {
         initButton(&button[i], texButton);
     }
@@ -255,11 +255,11 @@ void attribFileButtons(Button *button, Texture *texButton)
     addStringToText(&button[3].text, "Animate Model");
 }
 
-void attribToolButtons(Button *button, Texture *texButton)
+void attribToolButtonsEditor(Button *button, Texture *texButton)
 {
     int i;
 
-    for(i = 0; i < NUMBER_TOOL_BUTTONS; i++)
+    for(i = 0; i < NUMBER_TOOL_BUTTONS_EDITOR; i++)
     {
         initButton(&button[i], texButton);
     }
@@ -283,11 +283,11 @@ void attribToolButtons(Button *button, Texture *texButton)
     addStringToText(&button[2].text, "Selection : Face");
 }
 
-void attribTextureButtons(Button *button, Texture *texButton)
+void attribTextureButtonsEditor(Button *button, Texture *texButton)
 {
     int i;
 
-    for(i = 0; i < NUMBER_TEXTURE_BUTTONS; i++)
+    for(i = 0; i < NUMBER_TEXTURE_BUTTONS_EDITOR; i++)
     {
         initButton(&button[i], texButton);
     }
@@ -309,4 +309,32 @@ void attribTextureButtons(Button *button, Texture *texButton)
     button[2].pos.x = button[0].pos.x;
     button[2].pos.y = button[1].pos.y + button[0].height + 5;
     addStringToText(&button[2].text, "Reverse Texture");
+}
+
+void attribMainButtonsAnimator(Button *button, Texture *texButton)
+{
+    int i;
+
+    for(i = 0; i < NUMBER_MAIN_BUTTONS_EDITOR; i++)
+    {
+        initButton(&button[i], texButton);
+    }
+
+    button[0].height = 40;
+    button[0].weight = 60;
+    button[0].pos.x = 10;
+    button[0].pos.y = 10;
+    addStringToText(&button[0].text, "File");
+
+    button[1].height = 40;
+    button[1].weight = 80;
+    button[1].pos.x = button[0].pos.x + button[0].weight + 10;
+    button[1].pos.y = button[0].pos.y;
+    addStringToText(&button[1].text, "Edition");
+
+    button[2].height = 40;
+    button[2].weight = 80;
+    button[2].pos.x = button[1].pos.x + button[1].weight + 10;
+    button[2].pos.y = button[0].pos.y;
+    addStringToText(&button[2].text, "Tools");
 }
