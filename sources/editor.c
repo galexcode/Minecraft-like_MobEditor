@@ -586,6 +586,7 @@ int editor(char *mainPath, char *pathModel)
             clearScene();
 
             modeRender(RENDER_3D, &pos, &target, FOV);
+            animateModel(&model, "run");
             renderModel(&model, RENDER_MODE);
 
             sprintf(textDimensionResized.string, "%lf", dimensionResized);
@@ -650,19 +651,13 @@ int editor(char *mainPath, char *pathModel)
         }
     }
 
-    printf("aa\n");
-    fflush(stdout);
     freeModel(&model);
-    printf("bb\n");
-    fflush(stdout);
 
     free(mainButton);
     free(editionButton);
     free(fileButton);
     free(toolButton);
     free(textureButton);
-    printf("cc\n");
-    fflush(stdout);
 
     return 1;
 }

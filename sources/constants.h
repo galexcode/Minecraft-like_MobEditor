@@ -40,6 +40,7 @@
     enum{SCULPT_MODE, TRANSLATION_MODE};
     enum{CLIC_AND_SLIDE, CLIC_SLIDE_CLIC};
     enum{TRANSLATION_ANIMATION, ROTATION_ANIMATION};
+    enum{INCREASING, DECREASING};
 
     int quitSDL();
     int initOpenGL();
@@ -117,12 +118,16 @@
     typedef struct Animation Animation;
     struct Animation
     {
+        char animationName[128];
+        int nbMembersAffected;
+        int *typeAnimation;
         int *indexMemberAffected;
+        int *axisAnimated;
         float *minimalValue;
         float *maximalValue;
-        int *period;
-        int typeAnimation;
-        char animationName[128];
+        int *phase;
+        int *period;//ms
+        int lastUpdate;
     };
 
     typedef struct Model Model;
@@ -133,6 +138,7 @@
         Cube *member[MEMBERS_MAX];
         Point3D *translation[MEMBERS_MAX];
         Point3D *rotation[MEMBERS_MAX];
+        int nbAnims;
         Animation *animation[ANIMS_MAX];
         Texture tex;
         int saved;

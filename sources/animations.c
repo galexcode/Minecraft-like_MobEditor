@@ -32,7 +32,6 @@ int editAnimations(Model *model, Texture *textureText, int *weightLetter, Textur
 
         if(event.leave == 1 || (event.keydown[SDLK_LALT] == 1 && event.keydown[SDLK_F4] == 1))
         {
-            printf("leave\n");
             fflush(stdout);
             leave = 1;
             dataReturn = 0;
@@ -94,9 +93,6 @@ int editAnimations(Model *model, Texture *textureText, int *weightLetter, Textur
             SDL_Delay(15 - (actualTicks - previousTicks));
         }
     }
-
-    printf("-1 -1\n");
-    fflush(stdout);
 
     free(mainButton);
 
