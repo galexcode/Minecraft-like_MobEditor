@@ -9,5 +9,7 @@
     int animateModel(Model *model, char *nameAnimation);
     int createModel(char *mainPath, char *path, Model *model);
     int openTexture(char *mainPath, Model *model);
+    int stopAnimation(Model *model, char *nameAnimation);
+    int searchAnimation(Model *model, char *animationName);
 
 #endif

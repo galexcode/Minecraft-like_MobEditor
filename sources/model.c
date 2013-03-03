@@ -96,7 +96,7 @@ int loadModel(char *mainPath, char *path, Model *model)
                 for(k = 0; k < 4; k++)
                 {
                     fscanf(file, "v %f, %f, %f\n", &model->member[i]->face[j].point[k].x, &model->member[i]->face[j].point[k].y, &model->member[i]->face[j].point[k].z);
-                    fscanf(file, "t %lf %lf\n", &model->member[i]->face[j].point[k].coordFileTexture.x, &model->member[i]->face[j].point[k].coordFileTexture.y);
+                    fscanf(file, "t %lf %lf\n\n", &model->member[i]->face[j].point[k].coordFileTexture.x, &model->member[i]->face[j].point[k].coordFileTexture.y);
                 }
             }
         }
@@ -119,15 +119,8 @@ int loadModel(char *mainPath, char *path, Model *model)
     {
         fscanf(file, "anim %d\n", &i);
         fscanf(file, "name : %s\n", model->animation[i]->animationName);
-        fscanf(file, "nbMembersAffected : %d\n", &model->animation[i]->nbMembersAffected);
-
-        model->animation[i]->indexMemberAffected = malloc(model->animation[i]->nbMembersAffected * sizeof(int));
-        model->animation[i]->typeAnimation = malloc(model->animation[i]->nbMembersAffected * sizeof(int));
-        model->animation[i]->minimalValue = malloc(model->animation[i]->nbMembersAffected * sizeof(float));
-        model->animation[i]->maximalValue = malloc(model->animation[i]->nbMembersAffected * sizeof(float));
-        model->animation[i]->period = malloc(model->animation[i]->nbMembersAffected * sizeof(int));
-        model->animation[i]->phase = malloc(model->animation[i]->nbMembersAffected * sizeof(int));
-        model->animation[i]->axisAnimated = malloc(model->animation[i]->nbMembersAffected * sizeof(int));
+        model->animation[i]->isReversing = 0;
+        fscanf(file, "nbMembersAffected : %d\n\n", &model->animation[i]->nbMembersAffected);
 
         for(j = 0; j < model->animation[i]->nbMembersAffected; j++)
         {
@@ -136,14 +129,16 @@ int loadModel(char *mainPath, char *path, Model *model)
             fscanf(file, "axisAnimated : %d\n", &model->animation[i]->axisAnimated[j]);
             fscanf(file, "minimalValue : %f\n", &model->animation[i]->minimalValue[j]);
             fscanf(file, "maximalValue : %f\n", &model->animation[i]->maximalValue[j]);
-            fscanf(file, "phase : %d\n", &model->animation[i]->phase[j]);
-            fscanf(file, "period : %d\n", &model->animation[i]->period[j]);
+            fscanf(file, "basicValue : %f\n", &model->animation[i]->basicValue[j]);
+            fscanf(file, "phase : %d\n", &model->animation[i]->initialPhase[j]);
+            fscanf(file, "period : %d\n\n", &model->animation[i]->period[j]);
+
+            model->animation[i]->currentPhase[j] = model->animation[i]->initialPhase[j];
+            model->animation[i]->phaseChanged[j] = 0;
         }
 
         model->animation[i]->lastUpdate = -1;
     }
-
-
 
     fclose(file);
 
@@ -182,7 +177,7 @@ int saveModel(char *path, Model *model)
             for(k = 0; k < 4; k++)
             {
                 fprintf(file, "v %f, %f, %f\n", model->member[i]->face[j].point[k].x, model->member[i]->face[j].point[k].y, model->member[i]->face[j].point[k].z);
-                fprintf(file, "t %lf %lf\n", model->member[i]->face[j].point[k].coordFileTexture.x, model->member[i]->face[j].point[k].coordFileTexture.y);
+                fprintf(file, "t %lf %lf\n\n", model->member[i]->face[j].point[k].coordFileTexture.x, model->member[i]->face[j].point[k].coordFileTexture.y);
             }
         }
     }
@@ -193,7 +188,8 @@ int saveModel(char *path, Model *model)
     {
         fprintf(file, "anim %d\n", i);
         fprintf(file, "name : %s\n", model->animation[i]->animationName);
-        fprintf(file, "nbMembersAffected : %d\n", model->animation[i]->nbMembersAffected);
+        fprintf(file, "nbMembersAffected : %d\n\n", model->animation[i]->nbMembersAffected);
+
         for(j = 0; j < model->animation[i]->nbMembersAffected; j++)
         {
             fprintf(file, "index %d : %d\n", j, model->animation[i]->indexMemberAffected[j]);
@@ -201,8 +197,9 @@ int saveModel(char *path, Model *model)
             fprintf(file, "axisAnimated : %d\n", model->animation[i]->axisAnimated[j]);
             fprintf(file, "minimalValue : %f\n", model->animation[i]->minimalValue[j]);
             fprintf(file, "maximalValue : %f\n", model->animation[i]->maximalValue[j]);
-            fprintf(file, "phase : %d\n", model->animation[i]->phase[j]);
-            fprintf(file, "period : %d\n", model->animation[i]->period[j]);
+            fscanf(file, "basicValue : %f\n", &model->animation[i]->basicValue[j]);
+            fprintf(file, "phase : %d\n", model->animation[i]->initialPhase[j]);
+            fprintf(file, "period : %d\n\n", model->animation[i]->period[j]);
         }
     }
 
@@ -224,13 +221,7 @@ int freeModel(Model *model)
 
     for(i = 0; i < model->nbAnims; i++)
     {
-        free(model->animation[i]->typeAnimation);
-        free(model->animation[i]->indexMemberAffected);
-        free(model->animation[i]->minimalValue);
-        free(model->animation[i]->maximalValue);
-        free(model->animation[i]->period);
-        free(model->animation[i]->phase);
-        free(model->animation[i]->axisAnimated);
+        free(model->animation[i]);
     }
 
     initModel(model);
@@ -312,14 +303,11 @@ int animateModel(Model *model, char *nameAnimation)
 {
     int i;
     int indexAnimation = -1;
+    int dataReturned = 2;
+    float *dataToAnimate = NULL;
 
-    for(i = 0; i < model->nbAnims; i++)
-    {
-        if(strcmp(nameAnimation, model->animation[i]->animationName) == 0)
-        {
-            indexAnimation = i;
-        }
-    }
+    indexAnimation = searchAnimation(model, nameAnimation);
+
     if(indexAnimation == -1)
     {
         printf("Animation not found : %s\n", nameAnimation);
@@ -335,116 +323,93 @@ int animateModel(Model *model, char *nameAnimation)
     {
         if(model->animation[indexAnimation]->typeAnimation[i] == ROTATION_ANIMATION)
         {
-            if(model->animation[indexAnimation]->phase[i] == INCREASING)
+            switch(model->animation[indexAnimation]->axisAnimated[i])
             {
-                switch(model->animation[indexAnimation]->axisAnimated[i])
-                {
-                    case X:
-                        model->rotation[model->animation[indexAnimation]->indexMemberAffected[i]]->x += ((SDL_GetTicks() - model->animation[indexAnimation]->lastUpdate) * (model->animation[indexAnimation]->maximalValue[i] - model->animation[indexAnimation]->minimalValue[i])) / model->animation[indexAnimation]->period[i];
-                        if(model->rotation[model->animation[indexAnimation]->indexMemberAffected[i]]->x >= model->animation[indexAnimation]->maximalValue[i])
-                        {
-                            model->animation[indexAnimation]->phase[i] = DECREASING;
-                        }
-                        break;
-                    case Y:
-                        model->rotation[model->animation[indexAnimation]->indexMemberAffected[i]]->y += ((SDL_GetTicks() - model->animation[indexAnimation]->lastUpdate) * (model->animation[indexAnimation]->maximalValue[i] - model->animation[indexAnimation]->minimalValue[i])) / model->animation[indexAnimation]->period[i];
-                        if(model->rotation[model->animation[indexAnimation]->indexMemberAffected[i]]->y >= model->animation[indexAnimation]->maximalValue[i])
-                        {
-                            model->animation[indexAnimation]->phase[i] = DECREASING;
-                        }
-                        break;
-                    case Z:
-                        model->rotation[model->animation[indexAnimation]->indexMemberAffected[i]]->z += ((SDL_GetTicks() - model->animation[indexAnimation]->lastUpdate) * (model->animation[indexAnimation]->maximalValue[i] - model->animation[indexAnimation]->minimalValue[i])) / model->animation[indexAnimation]->period[i];
-                        if(model->rotation[model->animation[indexAnimation]->indexMemberAffected[i]]->z >= model->animation[indexAnimation]->maximalValue[i])
-                        {
-                            model->animation[indexAnimation]->phase[i] = DECREASING;
-                        }
-                        printf("%f\n", model->rotation[model->animation[indexAnimation]->indexMemberAffected[i]]->z);
-                        break;
-                }
+                case X:
+                    dataToAnimate = &model->rotation[model->animation[indexAnimation]->indexMemberAffected[i]]->x;
+                    break;
+                case Y:
+                    dataToAnimate = &model->rotation[model->animation[indexAnimation]->indexMemberAffected[i]]->y;
+                    break;
+                case Z:
+                    dataToAnimate = &model->rotation[model->animation[indexAnimation]->indexMemberAffected[i]]->z;
+                    break;
             }
-            else
+        }
+        else if(model->animation[indexAnimation]->typeAnimation[i] == TRANSLATION_ANIMATION)
+        {
+            switch(model->animation[indexAnimation]->axisAnimated[i])
             {
-                switch(model->animation[indexAnimation]->axisAnimated[i])
+                case X:
+                    dataToAnimate = &model->translation[model->animation[indexAnimation]->indexMemberAffected[i]]->x;
+                    break;
+                case Y:
+                    dataToAnimate = &model->translation[model->animation[indexAnimation]->indexMemberAffected[i]]->y;
+                    break;
+                case Z:
+                    dataToAnimate = &model->translation[model->animation[indexAnimation]->indexMemberAffected[i]]->z;
+                    break;
+            }
+        }
+
+        if(model->animation[indexAnimation]->currentPhase[i] == INCREASING)
+        {
+            (*dataToAnimate) += ((SDL_GetTicks() - model->animation[indexAnimation]->lastUpdate) * (model->animation[indexAnimation]->maximalValue[i] - model->animation[indexAnimation]->minimalValue[i])) / model->animation[indexAnimation]->period[i];
+            if((*dataToAnimate) >= model->animation[indexAnimation]->maximalValue[i] && model->animation[indexAnimation]->isReversing == 0)
+            {
+                model->animation[indexAnimation]->currentPhase[i] = DECREASING;
+                (*dataToAnimate) = model->animation[indexAnimation]->maximalValue[i];
+            }
+            if(model->animation[indexAnimation]->isReversing == 1)
+            {
+                if(((*dataToAnimate) < model->animation[indexAnimation]->basicValue[i] && model->animation[indexAnimation]->currentPhase[i] == INCREASING) || model->animation[indexAnimation]->phaseChanged[i] == 0)
                 {
-                    case X:
-                        model->rotation[model->animation[indexAnimation]->indexMemberAffected[i]]->x -= ((SDL_GetTicks() - model->animation[indexAnimation]->lastUpdate) * (model->animation[indexAnimation]->maximalValue[i] - model->animation[indexAnimation]->minimalValue[i])) / model->animation[indexAnimation]->period[i];
-                        if(model->rotation[model->animation[indexAnimation]->indexMemberAffected[i]]->x <= model->animation[indexAnimation]->minimalValue[i])
-                        {
-                            model->animation[indexAnimation]->phase[i] = INCREASING;
-                        }
-                        break;
-                    case Y:
-                        model->rotation[model->animation[indexAnimation]->indexMemberAffected[i]]->y -= ((SDL_GetTicks() - model->animation[indexAnimation]->lastUpdate) * (model->animation[indexAnimation]->maximalValue[i] - model->animation[indexAnimation]->minimalValue[i])) / model->animation[indexAnimation]->period[i];
-                        if(model->rotation[model->animation[indexAnimation]->indexMemberAffected[i]]->y <= model->animation[indexAnimation]->minimalValue[i])
-                        {
-                            model->animation[indexAnimation]->phase[i] = INCREASING;
-                        }
-                        break;
-                    case Z:
-                        model->rotation[model->animation[indexAnimation]->indexMemberAffected[i]]->z -= ((SDL_GetTicks() - model->animation[indexAnimation]->lastUpdate) * (model->animation[indexAnimation]->maximalValue[i] - model->animation[indexAnimation]->minimalValue[i])) / model->animation[indexAnimation]->period[i];
-                        if(model->rotation[model->animation[indexAnimation]->indexMemberAffected[i]]->z <= model->animation[indexAnimation]->minimalValue[i])
-                        {
-                            model->animation[indexAnimation]->phase[i] = INCREASING;
-                        }
-                        break;
+                    dataReturned = 1;
+                }
+                if((*dataToAnimate) > model->animation[indexAnimation]->basicValue[i] && model->animation[indexAnimation]->currentPhase[i] == INCREASING && model->animation[indexAnimation]->phaseChanged[i] == 1)
+                {
+                    (*dataToAnimate) = model->animation[indexAnimation]->basicValue[i];
+                }
+                if((*dataToAnimate) > model->animation[indexAnimation]->basicValue[i] && model->animation[indexAnimation]->phaseChanged[i] == 0)
+                {
+                    model->animation[indexAnimation]->currentPhase[i] = DECREASING;
+                    model->animation[indexAnimation]->phaseChanged[i] = 1;
+                }
+                else if((*dataToAnimate) < model->animation[indexAnimation]->basicValue[i] && model->animation[indexAnimation]->phaseChanged[i] == 0)
+                {
+                    model->animation[indexAnimation]->currentPhase[i] = INCREASING;
+                    model->animation[indexAnimation]->phaseChanged[i] = 1;
                 }
             }
         }
-        if(model->animation[indexAnimation]->typeAnimation[i] == TRANSLATION_ANIMATION)
+
+        else if(model->animation[indexAnimation]->currentPhase[i] == DECREASING)
         {
-            if(model->animation[indexAnimation]->phase[i] == INCREASING)
+            (*dataToAnimate) -= ((SDL_GetTicks() - model->animation[indexAnimation]->lastUpdate) * (model->animation[indexAnimation]->maximalValue[i] - model->animation[indexAnimation]->minimalValue[i])) / model->animation[indexAnimation]->period[i];
+            if((*dataToAnimate) <= model->animation[indexAnimation]->minimalValue[i] && model->animation[indexAnimation]->isReversing == 0)
             {
-                switch(model->animation[indexAnimation]->axisAnimated[i])
-                {
-                    case X:
-                        model->translation[model->animation[indexAnimation]->indexMemberAffected[i]]->x += ((SDL_GetTicks() - model->animation[indexAnimation]->lastUpdate) * (model->animation[indexAnimation]->maximalValue[i] - model->animation[indexAnimation]->minimalValue[i])) / model->animation[indexAnimation]->period[i];
-                        if(model->translation[model->animation[indexAnimation]->indexMemberAffected[i]]->x >= model->animation[indexAnimation]->maximalValue[i])
-                        {
-                            model->animation[indexAnimation]->phase[i] = DECREASING;
-                        }
-                        break;
-                    case Y:
-                        model->translation[model->animation[indexAnimation]->indexMemberAffected[i]]->y += ((SDL_GetTicks() - model->animation[indexAnimation]->lastUpdate) * (model->animation[indexAnimation]->maximalValue[i] - model->animation[indexAnimation]->minimalValue[i])) / model->animation[indexAnimation]->period[i];
-                        if(model->translation[model->animation[indexAnimation]->indexMemberAffected[i]]->y >= model->animation[indexAnimation]->maximalValue[i])
-                        {
-                            model->animation[indexAnimation]->phase[i] = DECREASING;
-                        }
-                        break;
-                    case Z:
-                        model->translation[model->animation[indexAnimation]->indexMemberAffected[i]]->z += ((SDL_GetTicks() - model->animation[indexAnimation]->lastUpdate) * (model->animation[indexAnimation]->maximalValue[i] - model->animation[indexAnimation]->minimalValue[i])) / model->animation[indexAnimation]->period[i];
-                        if(model->translation[model->animation[indexAnimation]->indexMemberAffected[i]]->z >= model->animation[indexAnimation]->maximalValue[i])
-                        {
-                            model->animation[indexAnimation]->phase[i] = DECREASING;
-                        }
-                        break;
-                }
+                model->animation[indexAnimation]->currentPhase[i] = INCREASING;
+                (*dataToAnimate) = model->animation[indexAnimation]->minimalValue[i];
             }
-            else
+            if(model->animation[indexAnimation]->isReversing == 1)
             {
-                switch(model->animation[indexAnimation]->axisAnimated[i])
+                if(((*dataToAnimate) > model->animation[indexAnimation]->basicValue[i] && model->animation[indexAnimation]->currentPhase[i] == DECREASING) || model->animation[indexAnimation]->phaseChanged[i] == 0)
                 {
-                    case X:
-                        model->translation[model->animation[indexAnimation]->indexMemberAffected[i]]->x -= ((SDL_GetTicks() - model->animation[indexAnimation]->lastUpdate) * (model->animation[indexAnimation]->maximalValue[i] - model->animation[indexAnimation]->minimalValue[i])) / model->animation[indexAnimation]->period[i];
-                        if(model->translation[model->animation[indexAnimation]->indexMemberAffected[i]]->x <= model->animation[indexAnimation]->minimalValue[i])
-                        {
-                            model->animation[indexAnimation]->phase[i] = INCREASING;
-                        }
-                        break;
-                    case Y:
-                        model->translation[model->animation[indexAnimation]->indexMemberAffected[i]]->y -= ((SDL_GetTicks() - model->animation[indexAnimation]->lastUpdate) * (model->animation[indexAnimation]->maximalValue[i] - model->animation[indexAnimation]->minimalValue[i])) / model->animation[indexAnimation]->period[i];
-                        if(model->translation[model->animation[indexAnimation]->indexMemberAffected[i]]->y <= model->animation[indexAnimation]->minimalValue[i])
-                        {
-                            model->animation[indexAnimation]->phase[i] = INCREASING;
-                        }
-                        break;
-                    case Z:
-                        model->translation[model->animation[indexAnimation]->indexMemberAffected[i]]->z -= ((SDL_GetTicks() - model->animation[indexAnimation]->lastUpdate) * (model->animation[indexAnimation]->maximalValue[i] - model->animation[indexAnimation]->minimalValue[i])) / model->animation[indexAnimation]->period[i];
-                        if(model->translation[model->animation[indexAnimation]->indexMemberAffected[i]]->z <= model->animation[indexAnimation]->minimalValue[i])
-                        {
-                            model->animation[indexAnimation]->phase[i] = INCREASING;
-                        }
-                        break;
+                    dataReturned = 1;
+                }
+                if((*dataToAnimate) < model->animation[indexAnimation]->basicValue[i] && model->animation[indexAnimation]->currentPhase[i] == DECREASING && model->animation[indexAnimation]->phaseChanged[i] == 1)
+                {
+                    (*dataToAnimate) = model->animation[indexAnimation]->basicValue[i];
+                }
+                if((*dataToAnimate) > model->animation[indexAnimation]->basicValue[i] && model->animation[indexAnimation]->phaseChanged[i] == 0)
+                {
+                    model->animation[indexAnimation]->currentPhase[i] = DECREASING;
+                    model->animation[indexAnimation]->phaseChanged[i] = 1;
+                }
+                else if((*dataToAnimate) < model->animation[indexAnimation]->basicValue[i] && model->animation[indexAnimation]->phaseChanged[i] == 0)
+                {
+                    model->animation[indexAnimation]->currentPhase[i] = INCREASING;
+                    model->animation[indexAnimation]->phaseChanged[i] = 1;
                 }
             }
         }
@@ -452,5 +417,56 @@ int animateModel(Model *model, char *nameAnimation)
 
     model->animation[indexAnimation]->lastUpdate = SDL_GetTicks();
 
+    if(model->animation[indexAnimation]->isReversing == 0)
+    {
+        dataReturned = 1;
+    }
+
+    if(dataReturned == 2)
+    {
+        model->animation[indexAnimation]->isReversing = 0;
+        model->animation[indexAnimation]->lastUpdate = -1;
+
+        for(i = 0; i < model->animation[indexAnimation]->nbMembersAffected; i++)
+        {
+            model->animation[indexAnimation]->phaseChanged[i] = 0;
+            model->animation[indexAnimation]->currentPhase[i] = model->animation[indexAnimation]->initialPhase[i];
+        }
+    }
+
+    return dataReturned;
+}
+
+int stopAnimation(Model *model, char *nameAnimation)
+{
+    int indexAnimation = -1;
+
+    indexAnimation = searchAnimation(model, nameAnimation);
+
+    if(indexAnimation == -1)
+    {
+        printf("Animation not found : %s\n", nameAnimation);
+        return 0;
+    }
+
+    model->animation[indexAnimation]->lastUpdate = -1;
+    model->animation[indexAnimation]->isReversing = 1;
+
     return 1;
+}
+
+int searchAnimation(Model *model, char *animationName)
+{
+    int i;
+    int indexAnimation = -1;
+
+    for(i = 0; i < model->nbAnims; i++)
+    {
+        if(strcmp(animationName, model->animation[i]->animationName) == 0)
+        {
+            indexAnimation = i;
+        }
+    }
+
+    return indexAnimation;
 }

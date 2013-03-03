@@ -6,6 +6,7 @@
 extern Input event;
 extern int windowWidth;
 extern int windowHeight;
+extern int weightLetter[256];
 
 int initButton(Button *button, Texture *tex)
 {
@@ -43,7 +44,7 @@ int initButton(Button *button, Texture *tex)
     return 1;
 }
 
-int renderButton(Button *button, Texture *textureText, int *weightLetter, Text *buff)
+int renderButton(Button *button, Texture *textureText, Text *buff)
 {
     Point2D position[4];
     Point2D posText;
@@ -146,7 +147,7 @@ int renderButton(Button *button, Texture *textureText, int *weightLetter, Text *
     return 1;
 }
 
-void buttonCollision(Button *button)
+int buttonCollision(Button *button)
 {
     button->selected = 0;
 
@@ -155,8 +156,10 @@ void buttonCollision(Button *button)
         if(event.posY >= (int)button->pos.y && event.posY <= (int)button->pos.y + button->height)
         {
             button->selected = 1;
+            return 1;
         }
     }
+    return 0;
 }
 
 void attribMainButtonsEditor(Button *button, Texture *texButton)
@@ -168,57 +171,58 @@ void attribMainButtonsEditor(Button *button, Texture *texButton)
         initButton(&button[i], texButton);
     }
 
-    button[0].height = 40;
-    button[0].weight = 60;
+    addStringToText(&button[0].text, "File");
+    addStringToText(&button[1].text, "Edition");
+    addStringToText(&button[2].text, "Tools");
+    addStringToText(&button[3].text, "Texture");
+
+
+    for(i = 0; i < NUMBER_MAIN_BUTTONS_EDITOR; i++)
+    {
+        button[i].weight = getWeightString(button[i].text, weightLetter) + 10;
+        button[i].height = 40;
+    }
+
     button[0].pos.x = 10;
     button[0].pos.y = 10;
-    addStringToText(&button[0].text, "File");
 
-    button[1].height = 40;
-    button[1].weight = 80;
     button[1].pos.x = button[0].pos.x + button[0].weight + 10;
     button[1].pos.y = button[0].pos.y;
-    addStringToText(&button[1].text, "Edition");
 
-    button[2].height = 40;
-    button[2].weight = 80;
     button[2].pos.x = button[1].pos.x + button[1].weight + 10;
     button[2].pos.y = button[0].pos.y;
-    addStringToText(&button[2].text, "Tools");
 
-    button[3].height = 40;
-    button[3].weight = 90;
     button[3].pos.x = button[2].pos.x + button[2].weight + 10;
     button[3].pos.y = button[0].pos.y;
-    addStringToText(&button[3].text, "Texture");
 }
 
 void attribEditionButtonsEditor(Button *button, Texture *texButton)
 {
     int i;
 
-    for(i = 0; i < NUMBER_TEXTURE_BUTTONS_EDITOR; i++)
+    for(i = 0; i < NUMBER_EDITION_BUTTONS_EDITOR; i++)
     {
         initButton(&button[i], texButton);
     }
 
-    button[0].height = 40;
-    button[0].weight = 220;
-    button[0].pos.x = 80;
-    button[0].pos.y = 55;
     addStringToText(&button[0].text, "Copy Cube (CTRL+C)");
+    addStringToText(&button[1].text, "Paste Cube (CTRL+V)");
+    addStringToText(&button[2].text, "Sculpt Mode");
 
-    button[1].height = 40;
-    button[1].weight = 220;
+    for(i = 0; i < NUMBER_EDITION_BUTTONS_EDITOR; i++)
+    {
+        button[i].weight = getWeightString(button[i].text, weightLetter) + 10;
+        button[i].height = 40;
+    }
+
+    button[0].pos.x = 63;
+    button[0].pos.y = 55;
+
     button[1].pos.x = button[0].pos.x;
     button[1].pos.y = button[0].pos.y + button[0].height + 5;
-    addStringToText(&button[1].text, "Paste Cube (CTRL+V)");
 
-    button[2].height = 40;
-    button[2].weight = 190;
     button[2].pos.x = button[0].pos.x;
     button[2].pos.y = button[1].pos.y + button[1].height + 5;
-    addStringToText(&button[2].text, "Sculpt Mode");
 }
 
 void attribFileButtonsEditor(Button *button, Texture *texButton)
@@ -230,29 +234,28 @@ void attribFileButtonsEditor(Button *button, Texture *texButton)
         initButton(&button[i], texButton);
     }
 
-    button[0].height = 40;
-    button[0].weight = 150;
+    addStringToText(&button[0].text, "Open A Model");
+    addStringToText(&button[1].text, "Save Model");
+    addStringToText(&button[2].text, "Save As ...");
+    addStringToText(&button[3].text, "Animate Mode");
+
+    for(i = 0; i < NUMBER_FILE_BUTTONS_EDITOR; i++)
+    {
+        button[i].weight = getWeightString(button[i].text, weightLetter) + 10;
+        button[i].height = 40;
+    }
+
     button[0].pos.x = 10;
     button[0].pos.y = 55;
-    addStringToText(&button[0].text, "Open A Model");
 
-    button[1].height = 40;
-    button[1].weight = 130;
     button[1].pos.x = button[0].pos.x;
     button[1].pos.y = button[0].pos.y + button[0].height + 5;
-    addStringToText(&button[1].text, "Save Model");
 
-    button[2].height = 40;
-    button[2].weight = 110;
     button[2].pos.x = button[0].pos.x;
     button[2].pos.y = button[1].pos.y + button[1].height + 5;
-    addStringToText(&button[2].text, "Save As ...");
 
-    button[3].height = 40;
-    button[3].weight = 150;
     button[3].pos.x = button[0].pos.x;
     button[3].pos.y = button[2].pos.y + button[2].height + 5;
-    addStringToText(&button[3].text, "Animate Model");
 }
 
 void attribToolButtonsEditor(Button *button, Texture *texButton)
@@ -264,23 +267,24 @@ void attribToolButtonsEditor(Button *button, Texture *texButton)
         initButton(&button[i], texButton);
     }
 
-    button[0].height = 40;
-    button[0].weight = 135;
-    button[0].pos.x = 170;
-    button[0].pos.y = 55;
     addStringToText(&button[0].text, "Add A Cube");
+    addStringToText(&button[1].text, "Remove Cube");
+    addStringToText(&button[2].text, "Selection : Face");
 
-    button[1].height = 40;
-    button[1].weight = 140;
+    for(i = 0; i < NUMBER_TOOL_BUTTONS_EDITOR; i++)
+    {
+        button[i].weight = getWeightString(button[i].text, weightLetter) + 10;
+        button[i].height = 40;
+    }
+
+    button[0].pos.x = 148;
+    button[0].pos.y = 55;
+
     button[1].pos.x = button[0].pos.x;
     button[1].pos.y = button[0].pos.y + button[0].height + 5;
-    addStringToText(&button[1].text, "Remove Cube");
 
-    button[2].height = 40;
-    button[2].weight = 170;
     button[2].pos.x = button[1].pos.x;
     button[2].pos.y = button[1].pos.y + button[1].height + 5;
-    addStringToText(&button[2].text, "Selection : Face");
 }
 
 void attribTextureButtonsEditor(Button *button, Texture *texButton)
@@ -292,49 +296,166 @@ void attribTextureButtonsEditor(Button *button, Texture *texButton)
         initButton(&button[i], texButton);
     }
 
-    button[0].height = 40;
-    button[0].weight = 170;
-    button[0].pos.x = 260;
-    button[0].pos.y = 55;
     addStringToText(&button[0].text, "Apply A Texture");
+    addStringToText(&button[1].text, "Invert Texture : X");
+    addStringToText(&button[2].text, "Reverse Texture");
 
-    button[1].height = 40;
-    button[1].weight = 200;
+    for(i = 0; i < NUMBER_TEXTURE_BUTTONS_EDITOR; i++)
+    {
+        button[i].weight = getWeightString(button[i].text, weightLetter) + 10;
+        button[i].height = 40;
+    }
+
+    button[0].pos.x = 222;
+    button[0].pos.y = 55;
+
     button[1].pos.x = button[0].pos.x;
     button[1].pos.y = button[0].pos.y + button[0].height + 5;
-    addStringToText(&button[1].text, "Invert Texture : X");
 
-    button[2].height = 40;
-    button[2].weight = 200;
     button[2].pos.x = button[0].pos.x;
     button[2].pos.y = button[1].pos.y + button[0].height + 5;
-    addStringToText(&button[2].text, "Reverse Texture");
 }
 
 void attribMainButtonsAnimator(Button *button, Texture *texButton)
 {
     int i;
 
-    for(i = 0; i < NUMBER_MAIN_BUTTONS_EDITOR; i++)
+    for(i = 0; i < NUMBER_MAIN_BUTTONS_ANIMATOR; i++)
     {
         initButton(&button[i], texButton);
     }
 
-    button[0].height = 40;
-    button[0].weight = 60;
+    addStringToText(&button[0].text, "File");
+    addStringToText(&button[1].text, "Edition");
+    addStringToText(&button[2].text, "Animations");
+
+    for(i = 0; i < NUMBER_MAIN_BUTTONS_ANIMATOR; i++)
+    {
+        button[i].weight = getWeightString(button[i].text, weightLetter) + 10;
+        button[i].height = 40;
+    }
+
     button[0].pos.x = 10;
     button[0].pos.y = 10;
-    addStringToText(&button[0].text, "File");
 
-    button[1].height = 40;
-    button[1].weight = 80;
     button[1].pos.x = button[0].pos.x + button[0].weight + 10;
     button[1].pos.y = button[0].pos.y;
-    addStringToText(&button[1].text, "Edition");
 
-    button[2].height = 40;
-    button[2].weight = 80;
     button[2].pos.x = button[1].pos.x + button[1].weight + 10;
     button[2].pos.y = button[0].pos.y;
-    addStringToText(&button[2].text, "Tools");
+}
+
+void attribFileButtonsAnimator(Button *button, Texture *texButton)
+{
+    int i;
+
+    for(i = 0; i < NUMBER_FILE_BUTTONS_ANIMATOR; i++)
+    {
+        initButton(&button[i], texButton);
+    }
+
+    addStringToText(&button[0].text, "Open A Model");
+    addStringToText(&button[1].text, "Save Model");
+    addStringToText(&button[2].text, "Save As ...");
+    addStringToText(&button[3].text, "Creation Mode");
+
+    for(i = 0; i < NUMBER_FILE_BUTTONS_ANIMATOR; i++)
+    {
+        button[i].weight = getWeightString(button[i].text, weightLetter) + 10;
+        button[i].height = 40;
+    }
+
+    button[0].pos.x = 10;
+    button[0].pos.y = 55;
+
+    button[1].pos.x = button[0].pos.x;
+    button[1].pos.y = button[0].pos.y + button[0].height + 5;
+
+    button[2].pos.x = button[0].pos.x;
+    button[2].pos.y = button[1].pos.y + button[1].height + 5;
+
+    button[3].pos.x = button[0].pos.x;
+    button[3].pos.y = button[2].pos.y + button[2].height + 5;
+}
+
+void attribEditionButtonsAnimator(Button *button, Texture *texButton)
+{
+    int i;
+
+    for(i = 0; i < NUMBER_EDITION_BUTTONS_ANIMATOR; i++)
+    {
+        initButton(&button[i], texButton);
+    }
+
+    addStringToText(&button[0].text, "Add Animation");
+    addStringToText(&button[1].text, "Remove Animation");
+
+    for(i = 0; i < NUMBER_EDITION_BUTTONS_ANIMATOR; i++)
+    {
+        button[i].weight = getWeightString(button[i].text, weightLetter) + 10;
+        button[i].height = 40;
+    }
+
+    button[0].pos.x = 64;
+    button[0].pos.y = 55;
+
+    button[1].pos.x = button[0].pos.x;
+    button[1].pos.y = button[0].pos.y + button[0].height + 5;
+}
+
+void attribAnimationButtonsAnimator(Button *button, Texture *texButton)
+{
+    int i;
+
+    for(i = 0; i < NUMBER_ANIMATION_BUTTONS_ANIMATOR; i++)
+    {
+        initButton(&button[i], texButton);
+    }
+
+    addStringToText(&button[0].text, "No Animation Yet");
+
+    for(i = 0; i < NUMBER_ANIMATION_BUTTONS_ANIMATOR; i++)
+    {
+        button[i].weight = getWeightString(button[i].text, weightLetter) + 10;
+        button[i].height = 40;
+    }
+
+    button[0].pos.x = 148;
+    button[0].pos.y = 55;
+}
+
+int attribAnimationButtonsAnimatorWithModelsAnimation(Model *model, Button *button, Texture *texButton)
+{
+    int i;
+
+    if(model->nbAnims == 0)
+    {
+        printf("No anims on the model\n");
+        return 0;
+    }
+
+    if(button == NULL)
+    {
+        printf("Error allocating button's memory\n");
+        return 0;
+    }
+
+    initButton(&button[0], texButton);
+    addStringToText(&button[0].text, "Stop animation");
+    button[0].weight = getWeightString(button[0].text, weightLetter) + 10;
+    button[0].height = 40;
+    button[0].pos.x = 148;
+    button[0].pos.y = 55;
+
+    for(i = 1; i < model->nbAnims + 1; i++)
+    {
+        initButton(&button[i], texButton);
+        addStringToText(&button[i].text, model->animation[i - 1]->animationName);
+        button[i].weight = getWeightString(button[i].text, weightLetter) + 10;
+        button[i].height = 40;
+        button[i].pos.x = 148;
+        button[i].pos.y = 55 + i * 45;
+    }
+
+    return 1;
 }

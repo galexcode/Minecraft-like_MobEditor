@@ -26,6 +26,9 @@
     #define NUMBER_TEXTURE_BUTTONS_EDITOR 3
 
     #define NUMBER_MAIN_BUTTONS_ANIMATOR 3
+    #define NUMBER_FILE_BUTTONS_ANIMATOR 4
+    #define NUMBER_ANIMATION_BUTTONS_ANIMATOR 1
+    #define NUMBER_EDITION_BUTTONS_ANIMATOR 2
     #define SIZE_PATH_MAX 512
 
     enum{COLLISION_MODE, RENDER_MODE};
@@ -36,7 +39,7 @@
     enum{GET_MODEL_PATH, GET_TEXTURE_PATH};
     enum{X_AXIS, Y_AXIS, Z_AXIS};
     enum{MODELS, TEXTURES};
-    enum{MAIN_BUTTONS, FILE_BUTTONS, EDITION_BUTTONS, TOOL_BUTTONS, TEXTURE_BUTTONS};
+    enum{MAIN_BUTTONS, FILE_BUTTONS, EDITION_BUTTONS, TOOL_BUTTONS, TEXTURE_BUTTONS, ANIMATION_BUTTONS};
     enum{SCULPT_MODE, TRANSLATION_MODE};
     enum{CLIC_AND_SLIDE, CLIC_SLIDE_CLIC};
     enum{TRANSLATION_ANIMATION, ROTATION_ANIMATION};
@@ -119,15 +122,19 @@
     struct Animation
     {
         char animationName[128];
+        int isReversing;
         int nbMembersAffected;
-        int *typeAnimation;
-        int *indexMemberAffected;
-        int *axisAnimated;
-        float *minimalValue;
-        float *maximalValue;
-        int *phase;
-        int *period;//ms
-        int lastUpdate;
+        int indexMemberAffected[MEMBERS_MAX];
+        int typeAnimation[MEMBERS_MAX];
+        int axisAnimated[MEMBERS_MAX];
+        float minimalValue[MEMBERS_MAX];
+        float maximalValue[MEMBERS_MAX];
+        float basicValue[MEMBERS_MAX];
+        int initialPhase[MEMBERS_MAX];
+        int currentPhase[MEMBERS_MAX];
+        int phaseChanged[MEMBERS_MAX];
+        int period[MEMBERS_MAX];//ms
+        unsigned int lastUpdate;//ms, set at -1 for the beginning
     };
 
     typedef struct Model Model;
