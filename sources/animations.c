@@ -298,6 +298,12 @@ int editAnimations(Model *model, char *mainPath, char *pathModel, Texture *textu
             renderModel(model, COLLISION_MODE);
             collisionCursorModel(model, &indexMemberAffected, &indexFaceAffected);
 
+            if(indexMemberAffected != -1 || indexFaceAffected != -1)
+            {
+                model->saved = 0;
+                addStringToText(&fileButton[1].text, "Save Model");
+            }
+
             clearScene();
             modeRender(RENDER_3D, &pos, &target, FOV);
 

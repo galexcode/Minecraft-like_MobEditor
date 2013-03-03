@@ -197,7 +197,7 @@ int saveModel(char *path, Model *model)
             fprintf(file, "axisAnimated : %d\n", model->animation[i]->axisAnimated[j]);
             fprintf(file, "minimalValue : %f\n", model->animation[i]->minimalValue[j]);
             fprintf(file, "maximalValue : %f\n", model->animation[i]->maximalValue[j]);
-            fscanf(file, "basicValue : %f\n", &model->animation[i]->basicValue[j]);
+            fprintf(file, "basicValue : %f\n", model->animation[i]->basicValue[j]);
             fprintf(file, "phase : %d\n", model->animation[i]->initialPhase[j]);
             fprintf(file, "period : %d\n\n", model->animation[i]->period[j]);
         }
