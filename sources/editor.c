@@ -566,8 +566,8 @@ int editor(char *mainPath, char *pathModel)
             }
             if(!selected && event.posX >= textureEditor.pos.x)
             {
-                    indexMemberAffected = -1;
-                    indexFaceAffected = -1;
+                indexMemberAffected = -1;
+                indexFaceAffected = -1;
             }
             if(indexMemberAffected >= 0 && indexMemberAffected < model.nbMembers && indexFaceAffected >= 0 && indexFaceAffected < 6 && selection == FACE_SELECTION)
             {
@@ -594,7 +594,7 @@ int editor(char *mainPath, char *pathModel)
             textDimensionResized.nbChar = 8;
 
             modeRender(RENDER_2D, &pos, &target, FOV);
-            renderMenuEditor(&model, mainButton, editionButton, fileButton, toolButton, textureButton, buttonsToRender, &texText, &buff, &textureEditor, &selectionTexture, &textDimensionResized);
+            renderMenuEditor(&model, mainButton, editionButton, fileButton, toolButton, textureButton, buttonsToRender, &texText, &textureEditor, &selectionTexture, &textDimensionResized);
 
             refreshScene();
             if(indexMemberAffected >= 0 && indexMemberAffected < model.nbMembers && indexFaceAffected >= 0 && indexFaceAffected < 6 && selection == FACE_SELECTION)
@@ -945,7 +945,7 @@ double editCube(Model *model, int modeModelisation, int indexMemberAffected, int
     return dimensionEdited;
 }
 
-void renderMenuEditor(Model *model, Button *mainButton, Button *editionButton, Button *fileButton, Button *toolButton, Button *textureButton, int buttonsToRender, Texture *textureText, Text *buff, Texture *textureEditor, Face *selectionTexture, Text *textDimensionResized)
+void renderMenuEditor(Model *model, Button *mainButton, Button *editionButton, Button *fileButton, Button *toolButton, Button *textureButton, int buttonsToRender, Texture *textureText, Texture *textureEditor, Face *selectionTexture, Text *textDimensionResized)
 {
     int i;
 
@@ -955,14 +955,14 @@ void renderMenuEditor(Model *model, Button *mainButton, Button *editionButton, B
 
     for(i = 0; i < NUMBER_MAIN_BUTTONS_EDITOR; i++)
     {
-        renderButton(&mainButton[i], textureText, buff);
+        renderButton(&mainButton[i], textureText);
     }
 
     if(buttonsToRender == EDITION_BUTTONS)
     {
         for(i = 0; i < NUMBER_EDITION_BUTTONS_EDITOR; i++)
         {
-            renderButton(&editionButton[i], textureText, buff);
+            renderButton(&editionButton[i], textureText);
         }
     }
 
@@ -970,7 +970,7 @@ void renderMenuEditor(Model *model, Button *mainButton, Button *editionButton, B
     {
         for(i = 0; i < NUMBER_FILE_BUTTONS_EDITOR; i++)
         {
-            renderButton(&fileButton[i], textureText, buff);
+            renderButton(&fileButton[i], textureText);
         }
     }
 
@@ -978,7 +978,7 @@ void renderMenuEditor(Model *model, Button *mainButton, Button *editionButton, B
     {
         for(i = 0; i < NUMBER_TOOL_BUTTONS_EDITOR; i++)
         {
-            renderButton(&toolButton[i], textureText, buff);
+            renderButton(&toolButton[i], textureText);
         }
     }
 
@@ -986,7 +986,7 @@ void renderMenuEditor(Model *model, Button *mainButton, Button *editionButton, B
     {
         for(i = 0; i < NUMBER_TEXTURE_BUTTONS_EDITOR; i++)
         {
-            renderButton(&textureButton[i], textureText, buff);
+            renderButton(&textureButton[i], textureText);
         }
     }
 

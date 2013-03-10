@@ -44,7 +44,7 @@ int initButton(Button *button, Texture *tex)
     return 1;
 }
 
-int renderButton(Button *button, Texture *textureText, Text *buff)
+int renderButton(Button *button, Texture *textureText)
 {
     Point2D position[4];
     Point2D posText;
@@ -136,10 +136,10 @@ int renderButton(Button *button, Texture *textureText, Text *buff)
         glEnd();
 
         glTranslated(0, 0, 1);
-        posText.x = (int)button->pos.x + button->weight / 2 - getWeightString((*buff), weightLetter) / 2;
+        posText.x = (int)button->pos.x + button->weight / 2 - getWeightString((button->text), weightLetter) / 2;
         posText.y = (int)button->pos.y + button->height / 2 - 8;
 
-        writeText(textureText, (*buff), weightLetter, (int)posText.x, (int)posText.y);
+        writeText(textureText, button->text, weightLetter, (int)posText.x, (int)posText.y);
 
         glPopMatrix();
     }
@@ -389,6 +389,7 @@ void attribEditionButtonsAnimator(Button *button, Texture *texButton)
 
     addStringToText(&button[0].text, "Add Animation");
     addStringToText(&button[1].text, "Remove Animation");
+    addStringToText(&button[2].text, "Animation : Rotation");
 
     for(i = 0; i < NUMBER_EDITION_BUTTONS_ANIMATOR; i++)
     {
@@ -401,6 +402,9 @@ void attribEditionButtonsAnimator(Button *button, Texture *texButton)
 
     button[1].pos.x = button[0].pos.x;
     button[1].pos.y = button[0].pos.y + button[0].height + 5;
+
+    button[2].pos.x = button[1].pos.x;
+    button[2].pos.y = button[1].pos.y + button[1].height + 5;
 }
 
 void attribAnimationButtonsAnimator(Button *button, Texture *texButton)

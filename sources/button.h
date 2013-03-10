@@ -2,7 +2,7 @@
 #define BUTTON
 
     int initButton(Button *button, Texture *tex);
-    int renderButton(Button *button, Texture *textureText, Text *buff);
+    int renderButton(Button *button, Texture *textureText);
     int buttonCollision(Button *button);
     void attribMainButtonsEditor(Button *button, Texture *texButton);
     void attribEditionButtonsEditor(Button *button, Texture *texButton);
