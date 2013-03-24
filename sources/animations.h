@@ -6,5 +6,7 @@
     int addAnimation(Model *model, char *animationName);
     int removeAnimation(Model *model, char *animationName);
     float editMemberAnimation(Model *model, char *animationName, int typeAnimation, int indexMemberAffected, int indexFaceAffected);
+    void collisionCursorModelAnimator(int indexMemberAffected, int *indexFaceAffected, int *indexAreaSelected);
+    Point3D defineCubeOrigin(Model *model, int indexMemberAffected, int indexFaceAffected, int indexAreaSelected);
 
 #endif

@@ -5,7 +5,7 @@
     int addCube(Model *model);
     int initCube(Cube *cube);
     void moveCamera(Point3D *pos, double angleX, double angleY, double *zoom);
-    void collisionCursorModel(Model *model, int *indexMemberAffected, int *indexFaceAffected);
+    void collisionCursorModelEditor(int *indexMemberAffected, int *indexFaceAffected);
     double editCube(Model *model, int modeModelisation, int indexMemberAffected, int indexFaceAffected, int selected);
     void renderMenuEditor(Model *model, Button *mainButton, Button *editionButton, Button *fileButton, Button *toolButton, Button *textureButton, int buttonsToRender, Texture *textureText, Texture *textureEditor, Face *selectionTexture, Text *textDimensionResized);
     int removeCube(Model *model, int *indexMemberAffected);

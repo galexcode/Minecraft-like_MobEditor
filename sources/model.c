@@ -231,13 +231,16 @@ int freeModel(Model *model)
 
 int renderModel(Model *model, int mode)
 {
-    int i, j;
+    int i, j, k, l;
+    Face faceBuff;
+    int basicIndexW = 0, basicIndexL = 0;
+    double width = -1, length = -1;
 
     glPushMatrix();
 
     glBindTexture(GL_TEXTURE_2D, model->tex.IDtex);
 
-    for(i = 0; i < model->nbMembers; i++)
+    for(i = 0; i < model->nbMembers; i++)//Cubes
     {
         glPushMatrix();
         glTranslatef(model->translation[i]->x, model->translation[i]->y, model->translation[i]->z);
@@ -245,19 +248,124 @@ int renderModel(Model *model, int mode)
         glRotated(model->rotation[i]->y, 0, 1, 0);
         glRotated(model->rotation[i]->z, 0, 0, 1);
 
-        for(j = 0; j < 6; j++)
+        for(j = 0; j < 6; j++)//Faces
         {
             if(mode == RENDER_MODE)
             {
                 glEnable(GL_BLEND);
                 glColor3ub(model->member[i]->face[j].color.r, model->member[i]->face[j].color.v, model->member[i]->face[j].color.b);
             }
-            else if(mode == COLLISION_MODE)
+            else if(mode == COLLISION_MODE_EDITOR)
             {
                 glColor3ub(i + 10, j + 10, j + 10);//To find indexes in the collision with glReadPixels();
             }
+            else if(mode == COLLISION_MODE_ANIMATOR)
+            {
+                if(model->member[i]->face[j].point[0].x == model->member[i]->face[j].point[2].x)
+                {
+                    width = model->member[i]->face[j].point[0].z - model->member[i]->face[j].point[2].z;
+                    length = model->member[i]->face[j].point[0].y - model->member[i]->face[j].point[2].y;
+                }
+                else if(model->member[i]->face[j].point[0].y == model->member[i]->face[j].point[2].y)
+                {
+                    width = model->member[i]->face[j].point[0].x - model->member[i]->face[j].point[2].x;
+                    length = model->member[i]->face[j].point[0].z - model->member[i]->face[j].point[2].z;
+                }
+                else if(model->member[i]->face[j].point[0].z == model->member[i]->face[j].point[2].z)
+                {
+                    width = model->member[i]->face[j].point[0].x - model->member[i]->face[j].point[2].x;
+                    length = model->member[i]->face[j].point[0].y - model->member[i]->face[j].point[2].y;
+                }
 
-            drawFace(&model->member[i]->face[j], mode);
+                if(width < 0)
+                    width *= -1;
+                if(length < 0)
+                    length *= -1;
+
+                for(k = 0; k < PRECISION_COLLISION; k++)
+                {
+                    for(l = 0; l < PRECISION_COLLISION; l++)
+                    {
+                        glColor3ub(j + 10, k + 10, l + 10);
+
+                        faceBuff.point[0] = model->member[i]->face[j].point[0];
+                        faceBuff.point[1] = model->member[i]->face[j].point[1];
+                        faceBuff.point[2] = model->member[i]->face[j].point[2];
+                        faceBuff.point[3] = model->member[i]->face[j].point[3];
+
+                        if(model->member[i]->face[j].point[0].x == model->member[i]->face[j].point[2].x)
+                        {
+                            if(faceBuff.point[0].z > faceBuff.point[2].z)
+                                basicIndexW = 2;
+
+                            if(faceBuff.point[0].y > faceBuff.point[2].y)
+                                basicIndexL = 2;
+
+                            faceBuff.point[0].z = model->member[i]->face[j].point[basicIndexW].z + (width / PRECISION_COLLISION) * k;
+                            faceBuff.point[0].y = model->member[i]->face[j].point[basicIndexL].y + (length / PRECISION_COLLISION) * l;
+
+                            faceBuff.point[1].z = faceBuff.point[0].z;
+                            faceBuff.point[1].y = model->member[i]->face[j].point[basicIndexL].y + (length / PRECISION_COLLISION) * (l + 1);
+
+                            faceBuff.point[2].z = model->member[i]->face[j].point[basicIndexW].z + (width / PRECISION_COLLISION) * (k + 1);
+                            faceBuff.point[2].y = faceBuff.point[1].y;
+
+                            faceBuff.point[3].z = faceBuff.point[2].z;
+                            faceBuff.point[3].y = faceBuff.point[0].y;
+                        }
+                        else if(model->member[i]->face[j].point[0].y == model->member[i]->face[j].point[2].y)
+                        {
+                            if(faceBuff.point[0].x > faceBuff.point[2].x)
+                                basicIndexW = 2;
+
+                            if(faceBuff.point[0].z > faceBuff.point[2].z)
+                                basicIndexL = 2;
+
+                            faceBuff.point[0].x = model->member[i]->face[j].point[basicIndexW].x + (width / PRECISION_COLLISION) * k;
+                            faceBuff.point[0].z = model->member[i]->face[j].point[basicIndexL].z + (length / PRECISION_COLLISION) * l;
+
+                            faceBuff.point[1].x = faceBuff.point[0].x;
+                            faceBuff.point[1].z = model->member[i]->face[j].point[basicIndexL].z + (length / PRECISION_COLLISION) * (l + 1);
+
+                            faceBuff.point[2].x = model->member[i]->face[j].point[basicIndexW].x + (width / PRECISION_COLLISION) * (k + 1);
+                            faceBuff.point[2].z = faceBuff.point[1].z;
+
+                            faceBuff.point[3].x = faceBuff.point[2].x;
+                            faceBuff.point[3].z = faceBuff.point[0].z;
+                        }
+                        else if(model->member[i]->face[j].point[0].z == model->member[i]->face[j].point[2].z)
+                        {
+                            if(faceBuff.point[0].x > faceBuff.point[2].x)
+                                basicIndexW = 2;
+
+                            if(faceBuff.point[0].y > faceBuff.point[2].y)
+                                basicIndexL = 2;
+
+                            faceBuff.point[0].x = model->member[i]->face[j].point[basicIndexW].x + (width / PRECISION_COLLISION) * k;
+                            faceBuff.point[0].y = model->member[i]->face[j].point[basicIndexL].y + (length / PRECISION_COLLISION) * l;
+
+                            faceBuff.point[1].x = faceBuff.point[0].x;
+                            faceBuff.point[1].y = model->member[i]->face[j].point[basicIndexL].y + (length / PRECISION_COLLISION) * (l + 1);
+
+                            faceBuff.point[2].x = model->member[i]->face[j].point[basicIndexW].x + (width / PRECISION_COLLISION) * (k + 1);
+                            faceBuff.point[2].y = faceBuff.point[1].y;
+
+                            faceBuff.point[3].x = faceBuff.point[2].x;
+                            faceBuff.point[3].y = faceBuff.point[0].y;
+                        }
+
+                        drawFace(&faceBuff, mode);
+
+                        basicIndexW = 0;
+                        basicIndexL = 0;
+                    }
+                }
+            }
+
+            if(mode != COLLISION_MODE_ANIMATOR)
+            {
+                drawFace(&model->member[i]->face[j], mode);
+            }
             glDisable(GL_BLEND);
         }
         glPopMatrix();

@@ -390,6 +390,7 @@ void attribEditionButtonsAnimator(Button *button, Texture *texButton)
     addStringToText(&button[0].text, "Add Animation");
     addStringToText(&button[1].text, "Remove Animation");
     addStringToText(&button[2].text, "Animation : Rotation");
+    addStringToText(&button[3].text, "Define Origin");
 
     for(i = 0; i < NUMBER_EDITION_BUTTONS_ANIMATOR; i++)
     {
@@ -405,6 +406,9 @@ void attribEditionButtonsAnimator(Button *button, Texture *texButton)
 
     button[2].pos.x = button[1].pos.x;
     button[2].pos.y = button[1].pos.y + button[1].height + 5;
+
+    button[3].pos.x = button[2].pos.x;
+    button[3].pos.y = button[2].pos.y + button[2].height + 5;
 }
 
 void attribAnimationButtonsAnimator(Button *button, Texture *texButton)

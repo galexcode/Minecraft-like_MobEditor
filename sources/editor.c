@@ -560,9 +560,9 @@ int editor(char *mainPath, char *pathModel)
             {
                 clearScene();
                 modeRender(RENDER_3D, &pos, &target, FOV);
-                renderModel(&model, COLLISION_MODE);
+                renderModel(&model, COLLISION_MODE_EDITOR);
 
-                collisionCursorModel(&model, &indexMemberAffected, &indexFaceAffected);
+                collisionCursorModelEditor(&indexMemberAffected, &indexFaceAffected);
             }
             if(!selected && event.posX >= textureEditor.pos.x)
             {
@@ -733,18 +733,18 @@ int initCube(Cube *cube)
     cube->face[0].point[2].y = 1;
     cube->face[0].point[3].x = 1;
 
-    cube->face[1].point[0].z = 1;
     cube->face[1].point[1].y = 1;
-    cube->face[1].point[1].z = 1;
     cube->face[1].point[2].y = 1;
+    cube->face[1].point[2].z = 1;
+    cube->face[1].point[3].z = 1;
 
-    cube->face[2].point[0].x = 1;
     cube->face[2].point[0].z = 1;
     cube->face[2].point[1].x = 1;
-    cube->face[2].point[1].y = 1;
     cube->face[2].point[1].z = 1;
-    cube->face[2].point[2].z = 1;
+    cube->face[2].point[2].x = 1;
     cube->face[2].point[2].y = 1;
+    cube->face[2].point[2].z = 1;
+    cube->face[2].point[3].y = 1;
     cube->face[2].point[3].z = 1;
 
     cube->face[3].point[0].x = 1;
@@ -756,19 +756,19 @@ int initCube(Cube *cube)
     cube->face[3].point[3].x = 1;
     cube->face[3].point[3].z = 1;
 
-    cube->face[4].point[0].z = 1;
+    cube->face[4].point[1].x = 1;
     cube->face[4].point[2].x = 1;
-    cube->face[4].point[3].x = 1;
+    cube->face[4].point[2].z = 1;
     cube->face[4].point[3].z = 1;
 
     cube->face[5].point[0].y = 1;
-    cube->face[5].point[1].y = 1;
     cube->face[5].point[1].x = 1;
+    cube->face[5].point[1].y = 1;
     cube->face[5].point[2].x = 1;
     cube->face[5].point[2].y = 1;
     cube->face[5].point[2].z = 1;
-    cube->face[5].point[3].y = 1;
     cube->face[5].point[3].z = 1;
+    cube->face[5].point[3].y = 1;
 
     return 1;
 }
@@ -780,7 +780,7 @@ void moveCamera(Point3D *pos, double angleX, double angleY, double *zoom)
     pos->y = cos(M_PI / 180 * angleX) * (*zoom);
 }
 
-void collisionCursorModel(Model *model, int *indexMemberAffected, int *indexFaceAffected)
+void collisionCursorModelEditor(int *indexMemberAffected, int *indexFaceAffected)
 {
     GLubyte pixel[3];
 

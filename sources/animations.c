@@ -7,6 +7,7 @@
 #include "button.h"
 #include "tools.h"
 #include "text.h"
+#include "sdlglutils.h"
 
 extern Input event;
 extern int weightLetter[256];
@@ -18,8 +19,9 @@ int editAnimations(Model *model, char *mainPath, char *pathModel, Texture *textu
     int i;
 
     int leave = 0, dataReturn = 1;
-    Point3D pos = {2.0, 2.0, 2.0}, target = {0.0, 0.0, 0.0}; //origin = {0.0, 0.0, 0.0};
+    Point3D pos = {2.0, 2.0, 2.0}, target = {0.0, 0.0, 0.0}, origin = {0.0, 0.0, 0.0};
     int indexMemberAffected = -1, indexFaceAffected = -1;
+    int indexAreaSelected = -1;
     int FOV = 70;
     int previousTicks = SDL_GetTicks(), actualTicks = SDL_GetTicks();
     int buttonsToRender = FILE_BUTTONS;
@@ -28,6 +30,7 @@ int editAnimations(Model *model, char *mainPath, char *pathModel, Texture *textu
     int modelSelected = 0;
 
     int typeAnimation = ROTATION_ANIMATION;
+    int definingOrigin = 0;
 
     char currentEditionAnimation[SIZE_PATH_MAX] = {0};
     char animationPlaying[SIZE_PATH_MAX] = {0};
@@ -271,6 +274,23 @@ int editAnimations(Model *model, char *mainPath, char *pathModel, Texture *textu
                 }
                 event.mouse[SDL_BUTTON_LEFT] = 0;
             }
+
+            if(editionButton[3].selected == 1 && event.mouse[SDL_BUTTON_LEFT] == 1)
+            {
+                if(definingOrigin == 1)
+                {
+                    definingOrigin = 0;
+                    addStringToText(&editionButton[3].text, "Define Origin");
+                    editionButton[3].weight = getWeightString(editionButton[3].text, weightLetter) + 10;
+                }
+                else
+                {
+                    definingOrigin = 1;
+                    addStringToText(&editionButton[3].text, "Defining ...");
+                    editionButton[3].weight = getWeightString(editionButton[3].text, weightLetter) + 10;
+                }
+                event.mouse[SDL_BUTTON_LEFT] = 0;
+            }
         }
 
         ///Manage Animation Button Collision
@@ -372,8 +392,21 @@ int editAnimations(Model *model, char *mainPath, char *pathModel, Texture *textu
                 clearScene();
                 modeRender(RENDER_3D, &pos, &target, FOV);
 
-                renderModel(model, COLLISION_MODE);
-                collisionCursorModel(model, &indexMemberAffected, &indexFaceAffected);
+                renderModel(model, COLLISION_MODE_EDITOR);
+                collisionCursorModelEditor(&indexMemberAffected, &indexFaceAffected);
+            }
+
+            if(!modelSelected)
+            {
+                clearScene();
+                modeRender(RENDER_3D, &pos, &target, FOV);
+
+                renderModel(model, COLLISION_MODE_ANIMATOR);
+                collisionCursorModelAnimator(0, &indexFaceAffected, &indexAreaSelected);
+                if(definingOrigin == 1 && indexFaceAffected != -1 && indexAreaSelected != -1 && indexMemberAffected != -1 && indexFaceAffected < 6 && indexAreaSelected < PRECISION_COLLISION * PRECISION_COLLISION && indexMemberAffected < model->nbMembers)
+                {
+                    origin = defineCubeOrigin(model, indexMemberAffected, indexFaceAffected, indexAreaSelected);
+                }
             }
 
             if(indexMemberAffected != -1 || indexFaceAffected != -1)
@@ -385,7 +418,14 @@ int editAnimations(Model *model, char *mainPath, char *pathModel, Texture *textu
             clearScene();
             modeRender(RENDER_3D, &pos, &target, FOV);
 
-            renderModel(model, RENDER_MODE);
+            renderModel(model, COLLISION_MODE_ANIMATOR);
+            if(definingOrigin)
+            {
+                glPushMatrix();
+                glTranslatef(origin.x, origin.y, origin.z);
+                drawAxis(2);
+                glPopMatrix();
+            }
 
             if(strlen(animationPlaying) > 0)
             {
@@ -514,6 +554,7 @@ int addAnimation(Model *model, char *animationName)
             printf("Error allocating animation's memory\n");
             return 0;
         }
+        model->animation[model->nbAnims]->nbMembersAffected = 0;
         model->animation[model->nbAnims]->lastUpdate = -1;
         sprintf(model->animation[model->nbAnims]->animationName, "%s", animationName);
 
@@ -628,7 +669,7 @@ float editMemberAnimation(Model *model, char *animationName, int typeAnimation, 
         if(typeAnimation == ROTATION_ANIMATION)
         {
             (*dataToEdit) += event.xrel;
-            if((*dataToEdit) > 360)
+            if((*dataToEdit) >= 360)
                 (*dataToEdit) = 0;
             else if((*dataToEdit) < 0)
                 (*dataToEdit) = 360;
@@ -636,4 +677,79 @@ float editMemberAnimation(Model *model, char *animationName, int typeAnimation, 
     }
 
     return (*dataToEdit);
+}
+
+void collisionCursorModelAnimator(int indexMemberAffected, int *indexFaceAffected, int *indexAreaSelected)
+{
+    GLubyte pixel[3];
+
+    glReadPixels(event.posX, windowHeight - event.posY, 1, 1, GL_RGB, GL_UNSIGNED_BYTE, pixel);
+
+    (*indexFaceAffected) = -1;
+    (*indexAreaSelected) = -1;
+
+    if(pixel[0] != 0)
+    {
+        (*indexFaceAffected) = pixel[0] - 10;
+        (*indexAreaSelected) = (pixel[1] - 10) * PRECISION_COLLISION + (pixel[2] - 10);
+    }
+}
+
+Point3D defineCubeOrigin(Model *model, int indexMemberAffected, int indexFaceAffected, int indexAreaSelected)
+{
+    Point3D origin;
+    double width, length;
+    int i, j;
+
+    j = indexAreaSelected % PRECISION_COLLISION;
+    i = (indexAreaSelected - j) / PRECISION_COLLISION;
+
+    if(model->member[indexMemberAffected]->face[indexFaceAffected].point[0].x == model->member[indexMemberAffected]->face[indexFaceAffected].point[2].x)
+    {
+        width = model->member[indexMemberAffected]->face[indexFaceAffected].point[0].z - model->member[indexMemberAffected]->face[indexFaceAffected].point[2].z;
+        length = model->member[indexMemberAffected]->face[indexFaceAffected].point[0].y - model->member[indexMemberAffected]->face[indexFaceAffected].point[2].y;
+
+        if(width < 0)
+            width *= -1;
+        if(length < 0)
+            length *= -1;
+
+        origin.x = model->member[indexMemberAffected]->face[indexFaceAffected].point[0].x;
+        origin.z = (width / (PRECISION_COLLISION - 1)) * i + model->member[indexMemberAffected]->face[indexFaceAffected].point[0].z;
+        origin.y = (length / (PRECISION_COLLISION - 1)) * j + model->member[indexMemberAffected]->face[indexFaceAffected].point[0].y;
+    }
+    else if(model->member[indexMemberAffected]->face[indexFaceAffected].point[0].y == model->member[indexMemberAffected]->face[indexFaceAffected].point[2].y)
+    {
+        width = model->member[indexMemberAffected]->face[indexFaceAffected].point[0].x - model->member[indexMemberAffected]->face[indexFaceAffected].point[2].x;
+        length = model->member[indexMemberAffected]->face[indexFaceAffected].point[0].z - model->member[indexMemberAffected]->face[indexFaceAffected].point[2].z;
+
+        if(width < 0)
+            width *= -1;
+        if(length < 0)
+            length *= -1;
+
+        origin.y = model->member[indexMemberAffected]->face[indexFaceAffected].point[0].y;
+        origin.x = (width / (PRECISION_COLLISION - 1)) * i + model->member[indexMemberAffected]->face[indexFaceAffected].point[0].x;
+        origin.z = (length / (PRECISION_COLLISION - 1)) * j + model->member[indexMemberAffected]->face[indexFaceAffected].point[0].z;
+    }
+    else if(model->member[indexMemberAffected]->face[indexFaceAffected].point[0].z == model->member[indexMemberAffected]->face[indexFaceAffected].point[2].z)
+    {
+        width = model->member[indexMemberAffected]->face[indexFaceAffected].point[0].x - model->member[indexMemberAffected]->face[indexFaceAffected].point[2].x;
+        length = model->member[indexMemberAffected]->face[indexFaceAffected].point[0].y - model->member[indexMemberAffected]->face[indexFaceAffected].point[2].y;
+
+        if(width < 0)
+            width *= -1;
+        if(length < 0)
+            length *= -1;
+
+        origin.z = model->member[indexMemberAffected]->face[indexFaceAffected].point[0].z;
+        origin.x = (width / (PRECISION_COLLISION - 1)) * i + model->member[indexMemberAffected]->face[indexFaceAffected].point[0].x;
+        origin.y = (length / (PRECISION_COLLISION - 1)) * j + model->member[indexMemberAffected]->face[indexFaceAffected].point[0].y;
+    }
+
+    origin.x += model->translation[indexMemberAffected]->x;
+    origin.y += model->translation[indexMemberAffected]->y;
+    origin.z += model->translation[indexMemberAffected]->z;
+
+    return origin;
 }
