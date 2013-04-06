@@ -328,6 +328,7 @@ void attribMainButtonsAnimator(Button *button, Texture *texButton)
     addStringToText(&button[0].text, "File");
     addStringToText(&button[1].text, "Edition");
     addStringToText(&button[2].text, "Animations");
+    addStringToText(&button[3].text, "Selection");
 
     for(i = 0; i < NUMBER_MAIN_BUTTONS_ANIMATOR; i++)
     {
@@ -343,6 +344,9 @@ void attribMainButtonsAnimator(Button *button, Texture *texButton)
 
     button[2].pos.x = button[1].pos.x + button[1].weight + 10;
     button[2].pos.y = button[0].pos.y;
+
+    button[3].pos.x = button[2].pos.x + button[2].weight + 10;
+    button[3].pos.y = button[0].pos.y;
 }
 
 void attribFileButtonsAnimator(Button *button, Texture *texButton)
@@ -430,6 +434,31 @@ void attribAnimationButtonsAnimator(Button *button, Texture *texButton)
 
     button[0].pos.x = 148;
     button[0].pos.y = 55;
+}
+
+void attribToolButtonsAnimator(Button *button, Texture *texButton)
+{
+    int i;
+
+    for(i = 0; i < NUMBER_TOOL_BUTTONS_ANIMATOR; i++)
+    {
+        initButton(&button[i], texButton);
+    }
+
+    addStringToText(&button[0].text, "Select A Cube");
+    addStringToText(&button[1].text, "Stop Selection");
+
+    for(i = 0; i < NUMBER_TOOL_BUTTONS_ANIMATOR; i++)
+    {
+        button[i].weight = getWeightString(button[i].text, weightLetter) + 10;
+        button[i].height = 40;
+    }
+
+    button[0].pos.x = 268;
+    button[0].pos.y = 55;
+
+    button[1].pos.x = button[0].pos.x;
+    button[1].pos.y = button[0].pos.y + button[0].height + 5;
 }
 
 int attribAnimationButtonsAnimatorWithModelsAnimation(Model *model, Button *button, Texture *texButton)

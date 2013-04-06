@@ -55,3 +55,19 @@ int getNameFileFromPath(char *mainPath, char *path, char *name)
 
     return 1;
 }
+
+double getMinimal(double A, double B)
+{
+    if(A >= B)
+        return B;
+    else
+        return A;
+}
+
+double getMaximal(double A, double B)
+{
+    if(A >= B)
+        return A;
+    else
+        return B;
+}

@@ -32,6 +32,9 @@ int main(int argc, char *argv[])
 
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_TEXTURE_2D);
+    glEnable(GL_ALPHA_TEST);
+
+    glAlphaFunc(GL_GREATER,0.1);
 
     if(argc == 2)
     {
@@ -40,6 +43,7 @@ int main(int argc, char *argv[])
 
     editor(mainPath, pathModel);
 
+    glDisable(GL_ALPHA_TEST);
     glDisable(GL_TEXTURE_2D);
     glDisable(GL_DEPTH_TEST);
 

@@ -14,6 +14,7 @@
     void attribEditionButtonsAnimator(Button *button, Texture *texButton);
     void attribFileButtonsAnimator(Button *button, Texture *texButton);
     void attribAnimationButtonsAnimator(Button *button, Texture *texButton);
+    void attribToolButtonsAnimator(Button *button, Texture *texButton);
     int attribAnimationButtonsAnimatorWithModelsAnimation(Model *model, Button *button, Texture *texButton);
 
 #endif

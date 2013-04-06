@@ -2,11 +2,13 @@
 #define ANIMS_H
 
     int editAnimations(Model *model, char *mainPath, char *pathModel, Texture *textureText, Texture *texButton, double *angleX, double *angleY, double *zoomModel);
-    void renderMenuAnimator(Texture *textureText, int *weightLetter, int buttonsToRender, Button *mainButton, Button *fileButton, Button *editionButton, Button *animationButton, int nbAnimationButtonRendered, Text *currentAnimationName, Text *textDimensionResized);
+    void renderMenuAnimator(Texture *textureText, int *weightLetter, int buttonsToRender, Button *mainButton, Button *fileButton, Button *editionButton, Button *animationButton, Button *toolButton, int nbAnimationButtonRendered, Text *currentAnimationName, Text *textDimensionResized);
     int addAnimation(Model *model, char *animationName);
     int removeAnimation(Model *model, char *animationName);
     float editMemberAnimation(Model *model, char *animationName, int typeAnimation, int indexMemberAffected, int indexFaceAffected);
     void collisionCursorModelAnimator(int indexMemberAffected, int *indexFaceAffected, int *indexAreaSelected);
     Point3D defineCubeOrigin(Model *model, int indexMemberAffected, int indexFaceAffected, int indexAreaSelected);
+    void fixCoordsModel(Model *model);
+    void attribMemberOrigin(Model *model, Point3D origin, int indexMemberAffected);
 
 #endif

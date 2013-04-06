@@ -243,10 +243,12 @@ int renderModel(Model *model, int mode)
     for(i = 0; i < model->nbMembers; i++)//Cubes
     {
         glPushMatrix();
+
         glTranslatef(model->translation[i]->x, model->translation[i]->y, model->translation[i]->z);
-        glRotated(model->rotation[i]->x, 1, 0, 0);
-        glRotated(model->rotation[i]->y, 0, 1, 0);
-        glRotated(model->rotation[i]->z, 0, 0, 1);
+
+        glRotatef(model->rotation[i]->x, 1, 0, 0);
+        glRotatef(model->rotation[i]->y, 0, 1, 0);
+        glRotatef(model->rotation[i]->z, 0, 0, 1);
 
         for(j = 0; j < 6; j++)//Faces
         {

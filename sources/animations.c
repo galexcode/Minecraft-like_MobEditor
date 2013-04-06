@@ -47,12 +47,14 @@ int editAnimations(Model *model, char *mainPath, char *pathModel, Texture *textu
     Button *fileButton;
     Button *editionButton;
     Button *animationButton;
+    Button *toolButton;
 
     mainButton = malloc(NUMBER_MAIN_BUTTONS_ANIMATOR * sizeof(Button));
     fileButton = malloc(NUMBER_FILE_BUTTONS_ANIMATOR * sizeof(Button));
     editionButton = malloc(NUMBER_EDITION_BUTTONS_ANIMATOR * sizeof(Button));
+    toolButton = malloc(NUMBER_TOOL_BUTTONS_ANIMATOR * sizeof(Button));
 
-    if(mainButton == NULL || fileButton == NULL || editionButton == NULL)
+    if(mainButton == NULL || fileButton == NULL || editionButton == NULL || toolButton == NULL)
     {
         printf("Error allocating button's memory\n");
         return 0;
@@ -61,6 +63,7 @@ int editAnimations(Model *model, char *mainPath, char *pathModel, Texture *textu
     attribMainButtonsAnimator(mainButton, texButton);
     attribFileButtonsAnimator(fileButton, texButton);
     attribEditionButtonsAnimator(editionButton, texButton);
+    attribToolButtonsAnimator(toolButton, texButton);
 
     textCurrentEditionAnimation.nbChar = 0;
     textDimensionResized.nbChar = 0;
@@ -132,6 +135,13 @@ int editAnimations(Model *model, char *mainPath, char *pathModel, Texture *textu
                     }
                 }
                 break;
+            case TOOL_BUTTONS:
+                for(i = 0; i < NUMBER_TOOL_BUTTONS_ANIMATOR; i++)
+                {
+                    if(buttonCollision(&toolButton[i]))
+                        buttonSelected = 1;
+                }
+                break;
             default:
                 break;
         }
@@ -173,6 +183,16 @@ int editAnimations(Model *model, char *mainPath, char *pathModel, Texture *textu
             event.mouse[SDL_BUTTON_LEFT] = 0;
         }
 
+        if(mainButton[3].selected == 1 && event.mouse[SDL_BUTTON_LEFT] == 1 && !modelSelected)
+        {
+            if(buttonsToRender != TOOL_BUTTONS)
+                buttonsToRender = TOOL_BUTTONS;
+            else
+                buttonsToRender = MAIN_BUTTONS;
+
+            event.mouse[SDL_BUTTON_LEFT] = 0;
+        }
+
         ///Manage File Button Collision
 
         if(buttonsToRender == FILE_BUTTONS && !modelSelected)
@@ -181,6 +201,8 @@ int editAnimations(Model *model, char *mainPath, char *pathModel, Texture *textu
             {
                 if(openBrowser(buff.string, MODELS))
                 {
+                    currentEditionAnimation[0] = 0;
+                    nextAnimation[0] = 0;
                     createModel(mainPath, buff.string, model);
                     sprintf(pathModel, buff.string);
                     if(model->nbAnims != 0)
@@ -363,7 +385,7 @@ int editAnimations(Model *model, char *mainPath, char *pathModel, Texture *textu
                 buttonsToRender = MAIN_BUTTONS;
         }
 
-        if(event.mouse[SDL_BUTTON_RIGHT] == 1)
+        if(event.mouse[SDL_BUTTON_RIGHT] == 1 && !definingOrigin)
         {
             if(indexMemberAffected != -1 && indexFaceAffected != -1)
             {
@@ -374,6 +396,16 @@ int editAnimations(Model *model, char *mainPath, char *pathModel, Texture *textu
                     dimensionResized = editMemberAnimation(model, currentEditionAnimation, typeAnimation, indexMemberAffected, indexFaceAffected);
                 }
             }
+        }
+
+        if((event.mouse[SDL_BUTTON_RIGHT] == 1 || event.mouse[SDL_BUTTON_LEFT] == 1) && definingOrigin && indexFaceAffected != -1 && indexMemberAffected != -1)
+        {
+            attribMemberOrigin(model, origin, indexMemberAffected);
+            definingOrigin = 0;
+            addStringToText(&editionButton[3].text, "Define Origin");
+            editionButton[3].weight = getWeightString(editionButton[3].text, weightLetter) + 10;
+            event.mouse[SDL_BUTTON_RIGHT] = 0;
+            event.mouse[SDL_BUTTON_LEFT] = 0;
         }
 
         if(event.mouse[SDL_BUTTON_RIGHT] == 0)
@@ -418,7 +450,7 @@ int editAnimations(Model *model, char *mainPath, char *pathModel, Texture *textu
             clearScene();
             modeRender(RENDER_3D, &pos, &target, FOV);
 
-            renderModel(model, COLLISION_MODE_ANIMATOR);
+            renderModel(model, RENDER_MODE);
             if(definingOrigin)
             {
                 glPushMatrix();
@@ -457,9 +489,9 @@ int editAnimations(Model *model, char *mainPath, char *pathModel, Texture *textu
             textCurrentEditionAnimation.nbChar = strlen(textCurrentEditionAnimation.string);
 
             if(model->nbAnims == 0)
-                renderMenuAnimator(textureText, weightLetter, buttonsToRender, mainButton, fileButton, editionButton, animationButton, NUMBER_ANIMATION_BUTTONS_ANIMATOR, &textCurrentEditionAnimation, &textDimensionResized);
+                renderMenuAnimator(textureText, weightLetter, buttonsToRender, mainButton, fileButton, editionButton, animationButton, toolButton, NUMBER_ANIMATION_BUTTONS_ANIMATOR, &textCurrentEditionAnimation, &textDimensionResized);
             else
-                renderMenuAnimator(textureText, weightLetter, buttonsToRender, mainButton, fileButton, editionButton, animationButton, model->nbAnims + 1, &textCurrentEditionAnimation, &textDimensionResized);
+                renderMenuAnimator(textureText, weightLetter, buttonsToRender, mainButton, fileButton, editionButton, animationButton, toolButton, model->nbAnims + 1, &textCurrentEditionAnimation, &textDimensionResized);
 
             refreshScene();
 
@@ -501,7 +533,7 @@ int editAnimations(Model *model, char *mainPath, char *pathModel, Texture *textu
     return dataReturn;
 }
 
-void renderMenuAnimator(Texture *textureText, int *weightLetter, int buttonsToRender, Button *mainButton, Button *fileButton, Button *editionButton, Button *animationButton, int nbAnimationButtonRendered, Text *currentAnimationName, Text *textDimensionResized)
+void renderMenuAnimator(Texture *textureText, int *weightLetter, int buttonsToRender, Button *mainButton, Button *fileButton, Button *editionButton, Button *animationButton, Button *toolButton, int nbAnimationButtonRendered, Text *currentAnimationName, Text *textDimensionResized)
 {
     int i;
 
@@ -531,6 +563,12 @@ void renderMenuAnimator(Texture *textureText, int *weightLetter, int buttonsToRe
             for(i = 0; i < nbAnimationButtonRendered; i++)
             {
                 renderButton(&animationButton[i], textureText);
+            }
+            break;
+        case TOOL_BUTTONS:
+            for(i = 0; i < NUMBER_EDITION_BUTTONS_ANIMATOR; i++)
+            {
+                renderButton(&toolButton[i], textureText);
             }
             break;
         default:
@@ -669,10 +707,10 @@ float editMemberAnimation(Model *model, char *animationName, int typeAnimation, 
         if(typeAnimation == ROTATION_ANIMATION)
         {
             (*dataToEdit) += event.xrel;
-            if((*dataToEdit) >= 360)
-                (*dataToEdit) = 0;
-            else if((*dataToEdit) < 0)
-                (*dataToEdit) = 360;
+            if((*dataToEdit) > 180)
+                (*dataToEdit) = -180;
+            else if((*dataToEdit) < -180)
+                (*dataToEdit) = 180;
         }
     }
 
@@ -752,4 +790,93 @@ Point3D defineCubeOrigin(Model *model, int indexMemberAffected, int indexFaceAff
     origin.z += model->translation[indexMemberAffected]->z;
 
     return origin;
+}
+
+void fixCoordsModel(Model *model)
+{
+    int h, i, j;
+    Point3D cubeDimension;
+    Point3D origin;
+    Cube tmp;
+
+    origin.x = 0;
+    origin.y = 0;
+    origin.z = 0;
+
+    for(i = 0; i < model->nbMembers; i++)
+    {
+        tmp = (*model->member[i]);
+
+        cubeDimension.x = model->member[i]->face[0].point[0].x - model->member[i]->face[2].point[2].x;
+        cubeDimension.y = model->member[i]->face[0].point[0].y - model->member[i]->face[2].point[2].y;
+        cubeDimension.z = model->member[i]->face[0].point[0].z - model->member[i]->face[2].point[2].z;
+
+        if(cubeDimension.x < 0)
+            cubeDimension.x *= -1;
+        if(cubeDimension.y < 0)
+            cubeDimension.y *= -1;
+        if(cubeDimension.z < 0)
+            cubeDimension.z *= -1;
+
+        model->translation[i]->x = model->member[i]->face[0].point[0].x + model->translation[i]->x;
+        model->translation[i]->y = model->member[i]->face[0].point[0].y + model->translation[i]->y;
+        model->translation[i]->z = model->member[i]->face[0].point[0].z + model->translation[i]->z;
+
+        initCube(model->member[i], origin, cubeDimension);
+
+        for(j = 0; j < 6; j++)
+        {
+            model->member[i]->face[j].color.r = tmp.face[j].color.r;
+            model->member[i]->face[j].color.v = tmp.face[j].color.v;
+            model->member[i]->face[j].color.b = tmp.face[j].color.b;
+
+            for(h = 0; h < 4; h++)
+            {
+                model->member[i]->face[j].point[h].coordFileTexture.x = tmp.face[j].point[h].coordFileTexture.x;
+                model->member[i]->face[j].point[h].coordFileTexture.y = tmp.face[j].point[h].coordFileTexture.y;
+            }
+        }
+    }
+}
+
+void attribMemberOrigin(Model *model, Point3D origin, int indexMemberAffected)
+{
+    int h, i = indexMemberAffected, j;
+    Point3D cubeDimension, cubeZeroPoint;
+    Cube tmp;
+
+    tmp = (*model->member[i]);
+
+    cubeDimension.x = model->member[i]->face[0].point[0].x - model->member[i]->face[2].point[2].x;
+    cubeDimension.y = model->member[i]->face[0].point[0].y - model->member[i]->face[2].point[2].y;
+    cubeDimension.z = model->member[i]->face[0].point[0].z - model->member[i]->face[2].point[2].z;
+
+    if(cubeDimension.x < 0)
+        cubeDimension.x *= -1;
+    if(cubeDimension.y < 0)
+        cubeDimension.y *= -1;
+    if(cubeDimension.z < 0)
+        cubeDimension.z *= -1;
+
+    cubeZeroPoint.x = model->translation[i]->x + model->member[i]->face[0].point[0].x - origin.x;
+    cubeZeroPoint.y = model->translation[i]->y + model->member[i]->face[0].point[0].y - origin.y;
+    cubeZeroPoint.z = model->translation[i]->z + model->member[i]->face[0].point[0].z - origin.z;
+
+    model->translation[i]->x += model->member[i]->face[0].point[0].x - cubeZeroPoint.x;
+    model->translation[i]->y += model->member[i]->face[0].point[0].y - cubeZeroPoint.y;
+    model->translation[i]->z += model->member[i]->face[0].point[0].z - cubeZeroPoint.z;
+
+    initCube(model->member[i], cubeZeroPoint, cubeDimension);
+
+    for(j = 0; j < 6; j++)
+    {
+        model->member[i]->face[j].color.r = tmp.face[j].color.r;
+        model->member[i]->face[j].color.v = tmp.face[j].color.v;
+        model->member[i]->face[j].color.b = tmp.face[j].color.b;
+        for(h = 0; h < 4; h++)
+        {
+            model->member[i]->face[j].point[h].coordFileTexture.x = tmp.face[j].point[h].coordFileTexture.x;
+            model->member[i]->face[j].point[h].coordFileTexture.y = tmp.face[j].point[h].coordFileTexture.y;
+        }
+    }
 }

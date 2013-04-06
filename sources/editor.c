@@ -489,6 +489,11 @@ int editor(char *mainPath, char *pathModel)
                     addStringToText(&textureButton[1].text, "Invert Texture : Y");
                     axisReversing = Y_AXIS;
                 }
+                else if(axisReversing == Y_AXIS)
+                {
+                    addStringToText(&textureButton[1].text, "Invert Texture : Z");
+                    axisReversing = Z_AXIS;
+                }
                 else
                 {
                     addStringToText(&textureButton[1].text, "Invert Texture : X");
@@ -665,6 +670,16 @@ int editor(char *mainPath, char *pathModel)
 
 int addCube(Model *model)
 {
+    Point3D origin, cubeDimension;
+
+    origin.x = 0;
+    origin.y = 0;
+    origin.z = 0;
+
+    cubeDimension.x = 1;
+    cubeDimension.y = 1;
+    cubeDimension.z = 1;
+
     if(model->nbMembers < MEMBERS_MAX)
     {
         model->member[model->nbMembers] = malloc(sizeof(Cube));
@@ -675,7 +690,7 @@ int addCube(Model *model)
             printf("Error allocating memory\n");
         }
         model->nbMembers++;
-        initCube(model->member[model->nbMembers - 1]);
+        initCube(model->member[model->nbMembers - 1], origin, cubeDimension);
         model->translation[model->nbMembers - 1]->x = 0;
         model->translation[model->nbMembers - 1]->y = 0;
         model->translation[model->nbMembers - 1]->z = 0;
@@ -707,7 +722,7 @@ int removeCube(Model *model, int *indexMemberAffected)
     return 1;
 }
 
-int initCube(Cube *cube)
+int initCube(Cube *cube, Point3D origin, Point3D dimension)
 {
     int i, j;
 
@@ -719,56 +734,56 @@ int initCube(Cube *cube)
 
         for(j = 0; j < 4; j++)
         {
-            cube->face[i].point[j].x = 0;
-            cube->face[i].point[j].y = 0;
-            cube->face[i].point[j].z = 0;
+            cube->face[i].point[j].x = origin.x;
+            cube->face[i].point[j].y = origin.y;
+            cube->face[i].point[j].z = origin.z;
 
             cube->face[i].point[j].coordFileTexture.x = -1;
             cube->face[i].point[j].coordFileTexture.y = -1;
         }
     }
 
-    cube->face[0].point[1].y = 1;
-    cube->face[0].point[2].x = 1;
-    cube->face[0].point[2].y = 1;
-    cube->face[0].point[3].x = 1;
+    cube->face[0].point[1].y += dimension.y;
+    cube->face[0].point[2].x += dimension.x;
+    cube->face[0].point[2].y += dimension.y;
+    cube->face[0].point[3].x += dimension.x;
 
-    cube->face[1].point[1].y = 1;
-    cube->face[1].point[2].y = 1;
-    cube->face[1].point[2].z = 1;
-    cube->face[1].point[3].z = 1;
+    cube->face[1].point[1].y += dimension.y;
+    cube->face[1].point[2].y += dimension.y;
+    cube->face[1].point[2].z += dimension.z;
+    cube->face[1].point[3].z += dimension.z;
 
-    cube->face[2].point[0].z = 1;
-    cube->face[2].point[1].x = 1;
-    cube->face[2].point[1].z = 1;
-    cube->face[2].point[2].x = 1;
-    cube->face[2].point[2].y = 1;
-    cube->face[2].point[2].z = 1;
-    cube->face[2].point[3].y = 1;
-    cube->face[2].point[3].z = 1;
+    cube->face[2].point[0].z += dimension.z;
+    cube->face[2].point[1].x += dimension.x;
+    cube->face[2].point[1].z += dimension.z;
+    cube->face[2].point[2].x += dimension.x;
+    cube->face[2].point[2].y += dimension.y;
+    cube->face[2].point[2].z += dimension.z;
+    cube->face[2].point[3].y += dimension.y;
+    cube->face[2].point[3].z += dimension.z;
 
-    cube->face[3].point[0].x = 1;
-    cube->face[3].point[1].x = 1;
-    cube->face[3].point[1].y = 1;
-    cube->face[3].point[2].x = 1;
-    cube->face[3].point[2].y = 1;
-    cube->face[3].point[2].z = 1;
-    cube->face[3].point[3].x = 1;
-    cube->face[3].point[3].z = 1;
+    cube->face[3].point[0].x += dimension.x;
+    cube->face[3].point[1].x += dimension.x;
+    cube->face[3].point[1].y += dimension.y;
+    cube->face[3].point[2].x += dimension.x;
+    cube->face[3].point[2].y += dimension.y;
+    cube->face[3].point[2].z += dimension.z;
+    cube->face[3].point[3].x += dimension.x;
+    cube->face[3].point[3].z += dimension.z;
 
-    cube->face[4].point[1].x = 1;
-    cube->face[4].point[2].x = 1;
-    cube->face[4].point[2].z = 1;
-    cube->face[4].point[3].z = 1;
+    cube->face[4].point[1].x += dimension.x;
+    cube->face[4].point[2].x += dimension.x;
+    cube->face[4].point[2].z += dimension.z;
+    cube->face[4].point[3].z += dimension.z;
 
-    cube->face[5].point[0].y = 1;
-    cube->face[5].point[1].x = 1;
-    cube->face[5].point[1].y = 1;
-    cube->face[5].point[2].x = 1;
-    cube->face[5].point[2].y = 1;
-    cube->face[5].point[2].z = 1;
-    cube->face[5].point[3].z = 1;
-    cube->face[5].point[3].y = 1;
+    cube->face[5].point[0].y += dimension.y;
+    cube->face[5].point[1].x += dimension.x;
+    cube->face[5].point[1].y += dimension.y;
+    cube->face[5].point[2].x += dimension.x;
+    cube->face[5].point[2].y += dimension.y;
+    cube->face[5].point[2].z += dimension.z;
+    cube->face[5].point[3].z += dimension.z;
+    cube->face[5].point[3].y += dimension.y;
 
     return 1;
 }
@@ -1134,13 +1149,21 @@ void reverseTexture(Model *model, int axisReversing, int indexMemberAffected, in
         model->member[indexMemberAffected]->face[indexFaceAffected].point[1].coordFileTexture = model->member[indexMemberAffected]->face[indexFaceAffected].point[2].coordFileTexture;
         model->member[indexMemberAffected]->face[indexFaceAffected].point[2].coordFileTexture = tmp;
     }
-    else
+    else if(axisReversing == Y_AXIS)
     {
         tmp = model->member[indexMemberAffected]->face[indexFaceAffected].point[0].coordFileTexture;
         model->member[indexMemberAffected]->face[indexFaceAffected].point[0].coordFileTexture = model->member[indexMemberAffected]->face[indexFaceAffected].point[1].coordFileTexture;
         model->member[indexMemberAffected]->face[indexFaceAffected].point[1].coordFileTexture = tmp;
 
         tmp = model->member[indexMemberAffected]->face[indexFaceAffected].point[2].coordFileTexture;
+        model->member[indexMemberAffected]->face[indexFaceAffected].point[2].coordFileTexture = model->member[indexMemberAffected]->face[indexFaceAffected].point[3].coordFileTexture;
+        model->member[indexMemberAffected]->face[indexFaceAffected].point[3].coordFileTexture = tmp;
+    }
+    else
+    {
+        tmp = model->member[indexMemberAffected]->face[indexFaceAffected].point[0].coordFileTexture;
+        model->member[indexMemberAffected]->face[indexFaceAffected].point[0].coordFileTexture = model->member[indexMemberAffected]->face[indexFaceAffected].point[1].coordFileTexture;
+        model->member[indexMemberAffected]->face[indexFaceAffected].point[1].coordFileTexture = model->member[indexMemberAffected]->face[indexFaceAffected].point[2].coordFileTexture;
         model->member[indexMemberAffected]->face[indexFaceAffected].point[2].coordFileTexture = model->member[indexMemberAffected]->face[indexFaceAffected].point[3].coordFileTexture;
         model->member[indexMemberAffected]->face[indexFaceAffected].point[3].coordFileTexture = tmp;
     }
