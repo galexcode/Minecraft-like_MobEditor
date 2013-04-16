@@ -415,6 +415,7 @@ int editAnimations(Model *model, char *mainPath, char *pathModel, Texture *textu
                 if(animationButton[i].selected == 1 && event.mouse[SDL_BUTTON_RIGHT] == 1)
                 {
                     animationButton[i].textInput = 1;
+                    sprintf(currentEditionAnimation, "%s", animationButton[i].text.string);
                     SDL_EnableUNICODE(1);
                     event.mouse[SDL_BUTTON_RIGHT] = 0;
                 }
@@ -425,7 +426,7 @@ int editAnimations(Model *model, char *mainPath, char *pathModel, Texture *textu
 
         if(buttonsToRender == TOOL_BUTTONS && !modelSelected)
         {
-            if(toolButton[0].selected == 1 && event.mouse[SDL_BUTTON_LEFT] == 1 && currentEditionAnimation[0] != 0)
+            if(toolButton[0].selected == 1 && event.mouse[SDL_BUTTON_LEFT] == 1)
             {
                 if(currentEditionAnimation[0] != 0)
                 {
@@ -514,6 +515,7 @@ int editAnimations(Model *model, char *mainPath, char *pathModel, Texture *textu
                     {
                         editingAnimation = 1;
                         addStringToText(&toolButton[2].text, "Editing ...");
+                        addStringToText(&textAdvice, "Define a value for the movement");
                         toolButton[2].weight = getWeightString(toolButton[2].text, weightLetter) + 10;
                     }
                     else if(editingAnimation)
@@ -602,7 +604,6 @@ int editAnimations(Model *model, char *mainPath, char *pathModel, Texture *textu
             stateSelection = SELECTED;
             addStringToText(&toolButton[0].text, "Stop Selection");
             toolButton[0].weight = getWeightString(toolButton[0].text, weightLetter) + 10;
-            addStringToText(&textAdvice, "Define a value for the movement");
 
             event.mouse[SDL_BUTTON_RIGHT] = 0;
             event.mouse[SDL_BUTTON_LEFT] = 0;
@@ -723,10 +724,10 @@ int editAnimations(Model *model, char *mainPath, char *pathModel, Texture *textu
 
                     if(strcmp(model->animation[i - 2]->animationName, animationPlaying) == 0)
                     {
-                        sprintf(animationPlaying, "%s", animationButton[i].text.string);
-                        sprintf(currentEditionAnimation, "%s", animationButton[i].text.string);
+                        sprintf(nextAnimation, "%s", animationButton[i].text.string);
                     }
 
+                    sprintf(currentEditionAnimation, "%s", animationButton[i].text.string);
                     sprintf(model->animation[i - 2]->animationName, "%s", animationButton[i].text.string);
 
                     SDL_EnableUNICODE(0);
@@ -921,6 +922,13 @@ float editMemberAnimation(Model *model, char *animationName, int typeAnimation, 
     {
         (*indexMovement) = searchMovement(model, indexAnimation, indexMemberAffected, axisAnimated, typeAnimation);
 
+        if((*indexMovement) != -1)
+        {
+            model->animation[indexAnimation]->basicValueEdited[(*indexMovement)] = 0;
+            model->animation[indexAnimation]->firstValueEdited[(*indexMovement)] = 0;
+            model->animation[indexAnimation]->secondValueEdited[(*indexMovement)] = 0;
+        }
+
         if((*indexMovement) == -1)
         {
             (*indexMovement) = getFreeMovement(model, indexAnimation);
@@ -929,6 +937,7 @@ float editMemberAnimation(Model *model, char *animationName, int typeAnimation, 
             {
                 return -1;
             }
+            model->animation[indexAnimation]->nbMovements++;
         }
     }
 
@@ -936,7 +945,6 @@ float editMemberAnimation(Model *model, char *animationName, int typeAnimation, 
     {
         if(model->animation[indexAnimation]->basicValueEdited[(*indexMovement)] == 0)
         {
-            model->animation[indexAnimation]->nbMovements++;
             getBasicValue(model, 0, indexAnimation, typeAnimation, axisAnimated);
             model->animation[indexAnimation]->basicValueEdited[(*indexMovement)] = 1;
             model->animation[indexAnimation]->typeAnimation[(*indexMovement)] = typeAnimation;

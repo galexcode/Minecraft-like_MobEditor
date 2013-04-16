@@ -3,8 +3,8 @@
 #include "model.h"
 #include "editor.h"
 
-int windowWidth = 1200;
-int windowHeight = 650;
+int windowWidth = 1250;
+int windowHeight = 750;
 
 Input event;
 SDL_Surface *window = NULL;
@@ -34,7 +34,7 @@ int main(int argc, char *argv[])
     glEnable(GL_TEXTURE_2D);
     glEnable(GL_ALPHA_TEST);
 
-    glAlphaFunc(GL_GREATER,0.1);
+    glAlphaFunc(GL_GREATER,0.001);
 
     if(argc == 2)
     {
