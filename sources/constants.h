@@ -29,10 +29,10 @@
     #define NUMBER_FILE_BUTTONS_ANIMATOR 4
     #define NUMBER_ANIMATION_BUTTONS_ANIMATOR 1
     #define NUMBER_EDITION_BUTTONS_ANIMATOR 4
-    #define NUMBER_TOOL_BUTTONS_ANIMATOR 2
+    #define NUMBER_TOOL_BUTTONS_ANIMATOR 3
 
     #define SIZE_PATH_MAX 512
-    #define PRECISION_COLLISION 5
+    #define PRECISION_COLLISION 9
 
     enum{COLLISION_MODE_EDITOR, COLLISION_MODE_ANIMATOR, RENDER_MODE};
     enum{RENDER_2D, RENDER_3D};
@@ -47,6 +47,7 @@
     enum{CLIC_AND_SLIDE, CLIC_SLIDE_CLIC};
     enum{TRANSLATION_ANIMATION, ROTATION_ANIMATION};
     enum{INCREASING, DECREASING};
+    enum{SELECTING, SELECTED, NONE};
 
     int quitSDL();
     int initOpenGL();
@@ -126,7 +127,7 @@
     {
         char animationName[128];
         int isReversing;
-        int nbMembersAffected;
+        int nbMovements;
         int indexMemberAffected[MEMBERS_MAX];
         int typeAnimation[MEMBERS_MAX];
         int axisAnimated[MEMBERS_MAX];
@@ -137,7 +138,11 @@
         int currentPhase[MEMBERS_MAX];
         int phaseChanged[MEMBERS_MAX];
         int period[MEMBERS_MAX];//ms
-        unsigned int lastUpdate;//ms, set at -1 for the beginning
+        int lastUpdate;//ms, set at -1 for the beginning
+
+        int firstValueEdited[MEMBERS_MAX];
+        int secondValueEdited[MEMBERS_MAX];
+        int basicValueEdited[MEMBERS_MAX];
     };
 
     typedef struct Model Model;

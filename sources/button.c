@@ -328,7 +328,7 @@ void attribMainButtonsAnimator(Button *button, Texture *texButton)
     addStringToText(&button[0].text, "File");
     addStringToText(&button[1].text, "Edition");
     addStringToText(&button[2].text, "Animations");
-    addStringToText(&button[3].text, "Selection");
+    addStringToText(&button[3].text, "Tools");
 
     for(i = 0; i < NUMBER_MAIN_BUTTONS_ANIMATOR; i++)
     {
@@ -446,7 +446,8 @@ void attribToolButtonsAnimator(Button *button, Texture *texButton)
     }
 
     addStringToText(&button[0].text, "Select A Cube");
-    addStringToText(&button[1].text, "Stop Selection");
+    addStringToText(&button[1].text, "Affect A Value");
+    addStringToText(&button[2].text, "Start Editing Movement");
 
     for(i = 0; i < NUMBER_TOOL_BUTTONS_ANIMATOR; i++)
     {
@@ -459,6 +460,9 @@ void attribToolButtonsAnimator(Button *button, Texture *texButton)
 
     button[1].pos.x = button[0].pos.x;
     button[1].pos.y = button[0].pos.y + button[0].height + 5;
+
+    button[2].pos.x = button[0].pos.x;
+    button[2].pos.y = button[1].pos.y + button[1].height + 5;
 }
 
 int attribAnimationButtonsAnimatorWithModelsAnimation(Model *model, Button *button, Texture *texButton)
@@ -478,20 +482,28 @@ int attribAnimationButtonsAnimatorWithModelsAnimation(Model *model, Button *butt
     }
 
     initButton(&button[0], texButton);
+    initButton(&button[1], texButton);
     addStringToText(&button[0].text, "Stop animation");
+    addStringToText(&button[1].text, "Play Animation");
+
     button[0].weight = getWeightString(button[0].text, weightLetter) + 10;
     button[0].height = 40;
     button[0].pos.x = 148;
     button[0].pos.y = 55;
 
-    for(i = 1; i < model->nbAnims + 1; i++)
+    button[1].weight = getWeightString(button[1].text, weightLetter) + 10;
+    button[1].height = 40;
+    button[1].pos.x = button[0].pos.x;
+    button[1].pos.y = button[0].pos.y + button[0].height + 5;
+
+    for(i = 2; i < model->nbAnims + 2; i++)
     {
         initButton(&button[i], texButton);
-        addStringToText(&button[i].text, model->animation[i - 1]->animationName);
+        addStringToText(&button[i].text, model->animation[i - 2]->animationName);
         button[i].weight = getWeightString(button[i].text, weightLetter) + 10;
         button[i].height = 40;
-        button[i].pos.x = 148;
-        button[i].pos.y = 55 + i * 45;
+        button[i].pos.x = button[0].pos.x;
+        button[i].pos.y = button[i - 1].pos.y + button[i - 1].height + 5;
     }
 
     return 1;

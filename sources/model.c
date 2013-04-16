@@ -120,9 +120,9 @@ int loadModel(char *mainPath, char *path, Model *model)
         fscanf(file, "anim %d\n", &i);
         fscanf(file, "name : %s\n", model->animation[i]->animationName);
         model->animation[i]->isReversing = 0;
-        fscanf(file, "nbMembersAffected : %d\n\n", &model->animation[i]->nbMembersAffected);
+        fscanf(file, "nbMovements : %d\n\n", &model->animation[i]->nbMovements);
 
-        for(j = 0; j < model->animation[i]->nbMembersAffected; j++)
+        for(j = 0; j < model->animation[i]->nbMovements; j++)
         {
             fscanf(file, "index %d : %d\n", &j, &model->animation[i]->indexMemberAffected[j]);
             fscanf(file, "typeAnimation : %d\n", &model->animation[i]->typeAnimation[j]);
@@ -188,9 +188,9 @@ int saveModel(char *path, Model *model)
     {
         fprintf(file, "anim %d\n", i);
         fprintf(file, "name : %s\n", model->animation[i]->animationName);
-        fprintf(file, "nbMembersAffected : %d\n\n", model->animation[i]->nbMembersAffected);
+        fprintf(file, "nbMovements : %d\n\n", model->animation[i]->nbMovements);
 
-        for(j = 0; j < model->animation[i]->nbMembersAffected; j++)
+        for(j = 0; j < model->animation[i]->nbMovements; j++)
         {
             fprintf(file, "index %d : %d\n", j, model->animation[i]->indexMemberAffected[j]);
             fprintf(file, "typeAnimation : %d\n", model->animation[i]->typeAnimation[j]);
@@ -380,6 +380,149 @@ int renderModel(Model *model, int mode)
     return 1;
 }
 
+void renderMember(Model *model, int indexMemberToRender, int mode)
+{
+    int i, k, l;
+    int basicIndexW = 0, basicIndexL = 0;
+    double width = -1, length = -1;
+    Face faceBuff;
+
+    glPushMatrix();
+
+    glTranslatef(model->translation[indexMemberToRender]->x, model->translation[indexMemberToRender]->y, model->translation[indexMemberToRender]->z);
+
+    glRotatef(model->rotation[indexMemberToRender]->x, 1, 0, 0);
+    glRotatef(model->rotation[indexMemberToRender]->y, 0, 1, 0);
+    glRotatef(model->rotation[indexMemberToRender]->z, 0, 0, 1);
+
+    glBindTexture(GL_TEXTURE_2D, model->tex.IDtex);
+
+    for(i = 0; i < 6; i++)
+    {
+        if(mode == RENDER_MODE)
+        {
+            glEnable(GL_BLEND);
+            glColor3ub(model->member[indexMemberToRender]->face[i].color.r, model->member[indexMemberToRender]->face[i].color.v, model->member[indexMemberToRender]->face[i].color.b);
+        }
+        else if(mode == COLLISION_MODE_EDITOR)
+        {
+            glColor3ub(indexMemberToRender + 10, i + 10, i + 10);//To find indexes in the collision with glReadPixels();
+        }
+        else if(mode == COLLISION_MODE_ANIMATOR)
+        {
+            if(model->member[indexMemberToRender]->face[i].point[0].x == model->member[indexMemberToRender]->face[i].point[2].x)
+            {
+                width = model->member[indexMemberToRender]->face[i].point[0].z - model->member[indexMemberToRender]->face[i].point[2].z;
+                length = model->member[indexMemberToRender]->face[i].point[0].y - model->member[indexMemberToRender]->face[i].point[2].y;
+            }
+            else if(model->member[indexMemberToRender]->face[i].point[0].y == model->member[indexMemberToRender]->face[i].point[2].y)
+            {
+                width = model->member[indexMemberToRender]->face[i].point[0].x - model->member[indexMemberToRender]->face[i].point[2].x;
+                length = model->member[indexMemberToRender]->face[i].point[0].z - model->member[indexMemberToRender]->face[i].point[2].z;
+            }
+            else if(model->member[indexMemberToRender]->face[i].point[0].z == model->member[indexMemberToRender]->face[i].point[2].z)
+            {
+                width = model->member[indexMemberToRender]->face[i].point[0].x - model->member[indexMemberToRender]->face[i].point[2].x;
+                length = model->member[indexMemberToRender]->face[i].point[0].y - model->member[indexMemberToRender]->face[i].point[2].y;
+            }
+
+            if(width < 0)
+                width *= -1;
+            if(length < 0)
+                length *= -1;
+
+            for(k = 0; k < PRECISION_COLLISION; k++)
+            {
+                for(l = 0; l < PRECISION_COLLISION; l++)
+                {
+                    glColor3ub(i + 10, k + 10, l + 10);
+
+                    faceBuff.point[0] = model->member[indexMemberToRender]->face[i].point[0];
+                    faceBuff.point[1] = model->member[indexMemberToRender]->face[i].point[1];
+                    faceBuff.point[2] = model->member[indexMemberToRender]->face[i].point[2];
+                    faceBuff.point[3] = model->member[indexMemberToRender]->face[i].point[3];
+
+                    if(model->member[indexMemberToRender]->face[i].point[0].x == model->member[indexMemberToRender]->face[i].point[2].x)
+                    {
+                        if(faceBuff.point[0].z > faceBuff.point[2].z)
+                            basicIndexW = 2;
+
+                        if(faceBuff.point[0].y > faceBuff.point[2].y)
+                            basicIndexL = 2;
+
+                        faceBuff.point[0].z = model->member[indexMemberToRender]->face[i].point[basicIndexW].z + (width / PRECISION_COLLISION) * k;
+                        faceBuff.point[0].y = model->member[indexMemberToRender]->face[i].point[basicIndexL].y + (length / PRECISION_COLLISION) * l;
+
+                        faceBuff.point[1].z = faceBuff.point[0].z;
+                        faceBuff.point[1].y = model->member[indexMemberToRender]->face[i].point[basicIndexL].y + (length / PRECISION_COLLISION) * (l + 1);
+
+                        faceBuff.point[2].z = model->member[indexMemberToRender]->face[i].point[basicIndexW].z + (width / PRECISION_COLLISION) * (k + 1);
+                        faceBuff.point[2].y = faceBuff.point[1].y;
+
+                        faceBuff.point[3].z = faceBuff.point[2].z;
+                        faceBuff.point[3].y = faceBuff.point[0].y;
+                    }
+                    else if(model->member[indexMemberToRender]->face[i].point[0].y == model->member[indexMemberToRender]->face[i].point[2].y)
+                    {
+                        if(faceBuff.point[0].x > faceBuff.point[2].x)
+                            basicIndexW = 2;
+
+                        if(faceBuff.point[0].z > faceBuff.point[2].z)
+                            basicIndexL = 2;
+
+                        faceBuff.point[0].x = model->member[indexMemberToRender]->face[i].point[basicIndexW].x + (width / PRECISION_COLLISION) * k;
+                        faceBuff.point[0].z = model->member[indexMemberToRender]->face[i].point[basicIndexL].z + (length / PRECISION_COLLISION) * l;
+
+                        faceBuff.point[1].x = faceBuff.point[0].x;
+                        faceBuff.point[1].z = model->member[indexMemberToRender]->face[i].point[basicIndexL].z + (length / PRECISION_COLLISION) * (l + 1);
+
+                        faceBuff.point[2].x = model->member[indexMemberToRender]->face[i].point[basicIndexW].x + (width / PRECISION_COLLISION) * (k + 1);
+                        faceBuff.point[2].z = faceBuff.point[1].z;
+
+                        faceBuff.point[3].x = faceBuff.point[2].x;
+                        faceBuff.point[3].z = faceBuff.point[0].z;
+                    }
+                    else if(model->member[indexMemberToRender]->face[i].point[0].z == model->member[indexMemberToRender]->face[i].point[2].z)
+                    {
+                        if(faceBuff.point[0].x > faceBuff.point[2].x)
+                            basicIndexW = 2;
+
+                        if(faceBuff.point[0].y > faceBuff.point[2].y)
+                            basicIndexL = 2;
+
+                        faceBuff.point[0].x = model->member[indexMemberToRender]->face[i].point[basicIndexW].x + (width / PRECISION_COLLISION) * k;
+                        faceBuff.point[0].y = model->member[indexMemberToRender]->face[i].point[basicIndexL].y + (length / PRECISION_COLLISION) * l;
+
+                        faceBuff.point[1].x = faceBuff.point[0].x;
+                        faceBuff.point[1].y = model->member[indexMemberToRender]->face[i].point[basicIndexL].y + (length / PRECISION_COLLISION) * (l + 1);
+
+                        faceBuff.point[2].x = model->member[indexMemberToRender]->face[i].point[basicIndexW].x + (width / PRECISION_COLLISION) * (k + 1);
+                        faceBuff.point[2].y = faceBuff.point[1].y;
+
+                        faceBuff.point[3].x = faceBuff.point[2].x;
+                        faceBuff.point[3].y = faceBuff.point[0].y;
+                    }
+
+                    drawFace(&faceBuff, mode);
+
+                    basicIndexW = 0;
+                    basicIndexL = 0;
+                }
+            }
+        }
+
+        if(mode != COLLISION_MODE_ANIMATOR)
+        {
+            drawFace(&model->member[indexMemberToRender]->face[i], mode);
+        }
+        glDisable(GL_BLEND);
+    }
+
+    glPopMatrix();
+
+    glBindTexture(GL_TEXTURE_2D, 0);
+}
+
 int openTexture(char *mainPath, Model *model)
 {
     char buff[SIZE_PATH_MAX] = "";
@@ -414,6 +557,7 @@ int animateModel(Model *model, char *nameAnimation)
     int i;
     int indexAnimation = -1;
     int dataReturned = 2;
+    int actualTime = SDL_GetTicks();
     float *dataToAnimate = NULL;
 
     indexAnimation = searchAnimation(model, nameAnimation);
@@ -429,7 +573,10 @@ int animateModel(Model *model, char *nameAnimation)
         model->animation[indexAnimation]->lastUpdate = SDL_GetTicks();
     }
 
-    for(i = 0; i < model->animation[indexAnimation]->nbMembersAffected; i++)
+    /*printf("i : %d\n", indexAnimation);
+    printf("nb : %d\n", model->animation[indexAnimation]->nbMovements);*/
+
+    for(i = 0; i < model->animation[indexAnimation]->nbMovements; i++)
     {
         if(model->animation[indexAnimation]->typeAnimation[i] == ROTATION_ANIMATION)
         {
@@ -462,9 +609,18 @@ int animateModel(Model *model, char *nameAnimation)
             }
         }
 
+        /*printf("min : %f\n", model->animation[indexAnimation]->minimalValue[i]);
+        printf("max : %f\n", model->animation[indexAnimation]->maximalValue[i]);
+        printf("ima: %d\n", model->animation[indexAnimation]->indexMemberAffected[i]);
+        printf("per : %d\n", model->animation[indexAnimation]->period[i]);
+        printf("phasechanged : %d\n", model->animation[indexAnimation]->phaseChanged[i]);
+        printf("rev : %d\n", model->animation[indexAnimation]->isReversing);
+        printf("actual : %f\n", (*dataToAnimate));*/
+
         if(model->animation[indexAnimation]->currentPhase[i] == INCREASING)
         {
-            (*dataToAnimate) += ((SDL_GetTicks() - model->animation[indexAnimation]->lastUpdate) * (model->animation[indexAnimation]->maximalValue[i] - model->animation[indexAnimation]->minimalValue[i])) / model->animation[indexAnimation]->period[i];
+            (*dataToAnimate) += ((actualTime - model->animation[indexAnimation]->lastUpdate) * (model->animation[indexAnimation]->maximalValue[i] - model->animation[indexAnimation]->minimalValue[i])) / model->animation[indexAnimation]->period[i];
+
             if((*dataToAnimate) >= model->animation[indexAnimation]->maximalValue[i] && model->animation[indexAnimation]->isReversing == 0)
             {
                 model->animation[indexAnimation]->currentPhase[i] = DECREASING;
@@ -495,7 +651,8 @@ int animateModel(Model *model, char *nameAnimation)
 
         else if(model->animation[indexAnimation]->currentPhase[i] == DECREASING)
         {
-            (*dataToAnimate) -= ((SDL_GetTicks() - model->animation[indexAnimation]->lastUpdate) * (model->animation[indexAnimation]->maximalValue[i] - model->animation[indexAnimation]->minimalValue[i])) / model->animation[indexAnimation]->period[i];
+            (*dataToAnimate) -= ((actualTime - model->animation[indexAnimation]->lastUpdate) * (model->animation[indexAnimation]->maximalValue[i] - model->animation[indexAnimation]->minimalValue[i])) / model->animation[indexAnimation]->period[i];
+
             if((*dataToAnimate) <= model->animation[indexAnimation]->minimalValue[i] && model->animation[indexAnimation]->isReversing == 0)
             {
                 model->animation[indexAnimation]->currentPhase[i] = INCREASING;
@@ -537,7 +694,7 @@ int animateModel(Model *model, char *nameAnimation)
         model->animation[indexAnimation]->isReversing = 0;
         model->animation[indexAnimation]->lastUpdate = -1;
 
-        for(i = 0; i < model->animation[indexAnimation]->nbMembersAffected; i++)
+        for(i = 0; i < model->animation[indexAnimation]->nbMovements; i++)
         {
             model->animation[indexAnimation]->phaseChanged[i] = 0;
             model->animation[indexAnimation]->currentPhase[i] = model->animation[indexAnimation]->initialPhase[i];

@@ -30,6 +30,11 @@ int editAnimations(Model *model, char *mainPath, char *pathModel, Texture *textu
     int modelSelected = 0;
 
     int typeAnimation = ROTATION_ANIMATION;
+    int indexCurrentAnimation = -1;
+    int stateSelection = NONE;
+    int editingAnimation = 0;
+    int indexMemberSelected = -1;
+    int indexMovement = -1;
     int definingOrigin = 0;
 
     char currentEditionAnimation[SIZE_PATH_MAX] = {0};
@@ -37,6 +42,7 @@ int editAnimations(Model *model, char *mainPath, char *pathModel, Texture *textu
     char nextAnimation[SIZE_PATH_MAX] = {0};
 
     Text textCurrentEditionAnimation;
+    Text textAdvice;
     Text textDimensionResized;
 
     float dimensionResized = -1;
@@ -67,6 +73,7 @@ int editAnimations(Model *model, char *mainPath, char *pathModel, Texture *textu
 
     textCurrentEditionAnimation.nbChar = 0;
     textDimensionResized.nbChar = 0;
+    textAdvice.nbChar = 0;
 
     if(model->nbAnims == 0)
     {
@@ -80,7 +87,7 @@ int editAnimations(Model *model, char *mainPath, char *pathModel, Texture *textu
     }
     else
     {
-        animationButton = malloc((model->nbAnims + 1) * sizeof(Button));
+        animationButton = malloc((model->nbAnims + 2) * sizeof(Button));
         if(animationButton == NULL)
         {
             printf("Error allocating button's memory\n");
@@ -88,6 +95,7 @@ int editAnimations(Model *model, char *mainPath, char *pathModel, Texture *textu
         }
         attribAnimationButtonsAnimatorWithModelsAnimation(model, animationButton, texButton);
     }
+
     event.mouse[SDL_BUTTON_LEFT] = 0;
 
     while(!leave)
@@ -128,7 +136,7 @@ int editAnimations(Model *model, char *mainPath, char *pathModel, Texture *textu
                 }
                 else
                 {
-                    for(i = 0; i < model->nbAnims + 1; i++)
+                    for(i = 0; i < model->nbAnims + 2; i++)
                     {
                         if(buttonCollision(&animationButton[i]))
                             buttonSelected = 1;
@@ -208,7 +216,7 @@ int editAnimations(Model *model, char *mainPath, char *pathModel, Texture *textu
                     if(model->nbAnims != 0)
                     {
                         free(animationButton);
-                        animationButton = malloc((model->nbAnims + 1) * sizeof(Button));
+                        animationButton = malloc((model->nbAnims + 2) * sizeof(Button));
                         if(animationButton == NULL)
                         {
                             printf("Error allocating button's memory\n");
@@ -267,9 +275,10 @@ int editAnimations(Model *model, char *mainPath, char *pathModel, Texture *textu
             if(editionButton[0].selected == 1 && event.mouse[SDL_BUTTON_LEFT] == 1)
             {
                 addAnimation(model, "New Animation");
+                addStringToText(&textAdvice, "Animation created, rename it with a right-clic");
 
                 free(animationButton);
-                animationButton = malloc((model->nbAnims + 1) * sizeof(Button));
+                animationButton = malloc((model->nbAnims + 2) * sizeof(Button));
                 if(animationButton == NULL)
                 {
                     printf("Error allocating button's memory\n");
@@ -280,37 +289,91 @@ int editAnimations(Model *model, char *mainPath, char *pathModel, Texture *textu
                 event.mouse[SDL_BUTTON_LEFT] = 0;
             }
 
-            if(editionButton[2].selected == 1 && event.mouse[SDL_BUTTON_LEFT] == 1)
+            if(editionButton[1].selected == 1 && event.mouse[SDL_BUTTON_LEFT] == 1)
             {
-                if(typeAnimation == ROTATION_ANIMATION)
+                if(strlen(currentEditionAnimation) > 0)
                 {
-                    typeAnimation = TRANSLATION_ANIMATION;
-                    addStringToText(&editionButton[2].text, "Animation : Translation");
-                    editionButton[2].weight = getWeightString(editionButton[2].text, weightLetter) + 10;
+                    removeAnimation(model, currentEditionAnimation);
+
+                    free(animationButton);
+
+                    if(model->nbAnims > 0)
+                    {
+                        animationButton = malloc((model->nbAnims + 2) * sizeof(Button));
+                        if(animationButton == NULL)
+                        {
+                            printf("Error allocating button's memory\n");
+                            return 0;
+                        }
+                        attribAnimationButtonsAnimatorWithModelsAnimation(model, animationButton, texButton);
+                    }
+                    else
+                    {
+                        animationButton = malloc(NUMBER_ANIMATION_BUTTONS_ANIMATOR * sizeof(Button));
+                        if(animationButton == NULL)
+                        {
+                            printf("Error allocating button's memory\n");
+                            return 0;
+                        }
+                        attribAnimationButtonsAnimator(animationButton, texButton);
+                    }
+
+                    addStringToText(&textAdvice, "Animation removed");
                 }
                 else
                 {
-                    typeAnimation = ROTATION_ANIMATION;
-                    addStringToText(&editionButton[2].text, "Animation : Rotation");
-                    editionButton[2].weight = getWeightString(editionButton[2].text, weightLetter) + 10;
+                    addStringToText(&textAdvice, "Select an animation before remove it");
                 }
+
                 event.mouse[SDL_BUTTON_LEFT] = 0;
+            }
+
+            if(editionButton[2].selected == 1 && event.mouse[SDL_BUTTON_LEFT] == 1)
+            {
+                if(editingAnimation == 0)
+                {
+                    if(typeAnimation == ROTATION_ANIMATION)
+                    {
+                        typeAnimation = TRANSLATION_ANIMATION;
+                        addStringToText(&editionButton[2].text, "Animation : Translation");
+                        editionButton[2].weight = getWeightString(editionButton[2].text, weightLetter) + 10;
+                    }
+                    else
+                    {
+                        typeAnimation = ROTATION_ANIMATION;
+                        addStringToText(&editionButton[2].text, "Animation : Rotation");
+                        editionButton[2].weight = getWeightString(editionButton[2].text, weightLetter) + 10;
+                    }
+                    event.mouse[SDL_BUTTON_LEFT] = 0;
+                }
+                else
+                {
+                    addStringToText(&textAdvice, "You cannot change the animation type while editing one");
+                }
             }
 
             if(editionButton[3].selected == 1 && event.mouse[SDL_BUTTON_LEFT] == 1)
             {
-                if(definingOrigin == 1)
+                if(stateSelection == SELECTED)
                 {
-                    definingOrigin = 0;
-                    addStringToText(&editionButton[3].text, "Define Origin");
-                    editionButton[3].weight = getWeightString(editionButton[3].text, weightLetter) + 10;
+                    if(definingOrigin == 1)
+                    {
+                        definingOrigin = 0;
+                        addStringToText(&editionButton[3].text, "Define Origin");
+                        editionButton[3].weight = getWeightString(editionButton[3].text, weightLetter) + 10;
+                    }
+                    else
+                    {
+                        definingOrigin = 1;
+                        addStringToText(&editionButton[3].text, "Defining ...");
+                        editionButton[3].weight = getWeightString(editionButton[3].text, weightLetter) + 10;
+                    }
                 }
                 else
                 {
-                    definingOrigin = 1;
-                    addStringToText(&editionButton[3].text, "Defining ...");
-                    editionButton[3].weight = getWeightString(editionButton[3].text, weightLetter) + 10;
+                    addStringToText(&textAdvice, "Select a cube before define his origin");
                 }
+
                 event.mouse[SDL_BUTTON_LEFT] = 0;
             }
         }
@@ -323,7 +386,14 @@ int editAnimations(Model *model, char *mainPath, char *pathModel, Texture *textu
                 stopAnimation(model, animationPlaying);
                 event.mouse[SDL_BUTTON_LEFT] = 0;
             }
-            for(i = 1; i < model->nbAnims + 1; i++)
+
+            if(animationButton[1].selected == 1 && event.mouse[SDL_BUTTON_LEFT] == 1 && strlen(currentEditionAnimation) > 0)
+            {
+                sprintf(animationPlaying, "%s", currentEditionAnimation);
+                event.mouse[SDL_BUTTON_LEFT] = 0;
+            }
+
+            for(i = 2; i < model->nbAnims + 2; i++)
             {
                 if(animationButton[i].selected == 1 && event.mouse[SDL_BUTTON_LEFT] == 1)
                 {
@@ -335,13 +405,12 @@ int editAnimations(Model *model, char *mainPath, char *pathModel, Texture *textu
                     else
                     {
                         sprintf(currentEditionAnimation, "%s", animationButton[i].text.string);
-                        sprintf(animationPlaying, "%s", animationButton[i].text.string);
                     }
                     event.mouse[SDL_BUTTON_LEFT] = 0;
                 }
             }
 
-            for(i = 1; i < model->nbAnims + 1; i++)
+            for(i = 2; i < model->nbAnims + 2; i++)
             {
                 if(animationButton[i].selected == 1 && event.mouse[SDL_BUTTON_RIGHT] == 1)
                 {
@@ -349,6 +418,124 @@ int editAnimations(Model *model, char *mainPath, char *pathModel, Texture *textu
                     SDL_EnableUNICODE(1);
                     event.mouse[SDL_BUTTON_RIGHT] = 0;
                 }
+            }
+        }
+
+        ///Manage Tool Button Collision
+
+        if(buttonsToRender == TOOL_BUTTONS && !modelSelected)
+        {
+            if(toolButton[0].selected == 1 && event.mouse[SDL_BUTTON_LEFT] == 1 && currentEditionAnimation[0] != 0)
+            {
+                if(currentEditionAnimation[0] != 0)
+                {
+                    if(stateSelection == NONE)
+                    {
+                        stateSelection = SELECTING;
+                        addStringToText(&toolButton[0].text, "Selecting ...");
+                        toolButton[0].weight = getWeightString(toolButton[0].text, weightLetter) + 10;
+                    }
+                    else if(stateSelection == SELECTING)
+                    {
+                        stateSelection = NONE;
+                        addStringToText(&toolButton[0].text, "Select A Cube");
+                        toolButton[0].weight = getWeightString(toolButton[0].text, weightLetter) + 10;
+
+                        indexMemberSelected = -1;
+                    }
+                    else if(stateSelection == SELECTED)
+                    {
+                        stateSelection = NONE;
+                        addStringToText(&toolButton[0].text, "Select A Cube");
+                        toolButton[0].weight = getWeightString(toolButton[0].text, weightLetter) + 10;
+
+                        editingAnimation = 0;
+                        addStringToText(&toolButton[2].text, "Start Editing Movement");
+                        toolButton[2].weight = getWeightString(toolButton[2].text, weightLetter) + 10;
+                        indexMemberSelected = -1;
+                        indexMovement = -1;
+
+                        definingOrigin = 0;
+                        addStringToText(&editionButton[3].text, "Define Origin");
+                        editionButton[3].weight = getWeightString(editionButton[3].text, weightLetter) + 10;
+                    }
+                }
+                else
+                {
+                    addStringToText(&textAdvice, "Select an animation before selecting a cube");
+                }
+                event.mouse[SDL_BUTTON_LEFT] = 0;
+            }
+            if(toolButton[1].selected == 1 && event.mouse[SDL_BUTTON_LEFT] == 1)
+            {
+                if(indexMemberSelected != -1)
+                {
+                    if(editingAnimation)
+                    {
+                        if(indexMovement != -1)
+                        {
+                            affectAnimationValue(model, indexCurrentAnimation, indexMovement, indexMemberSelected);
+                            if(model->animation[indexCurrentAnimation]->firstValueEdited[indexMovement] == 1)
+                            {
+                                addStringToText(&textAdvice, "Define a second value");
+                            }
+                            if(model->animation[indexCurrentAnimation]->secondValueEdited[indexMovement] == 1)
+                            {
+                                editingAnimation = 0;
+                                addStringToText(&toolButton[2].text, "Start Editing Movement");
+                                addStringToText(&textAdvice, "Movement defined");
+                                toolButton[2].weight = getWeightString(toolButton[2].text, weightLetter) + 10;
+
+                                if(model->animation[indexCurrentAnimation]->secondValueEdited[indexMovement] == 0)
+                                {
+                                    resetTransformationMember(model, indexCurrentAnimation, indexMovement);
+                                }
+                                indexMovement = -1;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        addStringToText(&textAdvice, "You cannot affect a value if you're not editing a movement");
+                    }
+                }
+                else
+                {
+                    addStringToText(&textAdvice, "Select a cube before affect any value");
+                }
+                event.mouse[SDL_BUTTON_LEFT] = 0;
+            }
+
+            if(toolButton[2].selected == 1 && event.mouse[SDL_BUTTON_LEFT] == 1)
+            {
+                if(indexMemberSelected != -1)
+                {
+                    if(!editingAnimation)
+                    {
+                        editingAnimation = 1;
+                        addStringToText(&toolButton[2].text, "Editing ...");
+                        toolButton[2].weight = getWeightString(toolButton[2].text, weightLetter) + 10;
+                    }
+                    else if(editingAnimation)
+                    {
+                        editingAnimation = 0;
+                        addStringToText(&toolButton[2].text, "Start Editing Movement");
+                        toolButton[2].weight = getWeightString(toolButton[2].text, weightLetter) + 10;
+                        if(indexMovement != -1)
+                        {
+                            if(model->animation[indexCurrentAnimation]->secondValueEdited[indexMovement] == 0)
+                            {
+                                resetTransformationMember(model, indexCurrentAnimation, indexMovement);
+                            }
+                        }
+                        indexMovement = -1;
+                    }
+                }
+                else
+                {
+                    addStringToText(&textAdvice, "Select a cube before editing movement");
+                }
+                event.mouse[SDL_BUTTON_LEFT] = 0;
             }
         }
 
@@ -385,25 +572,38 @@ int editAnimations(Model *model, char *mainPath, char *pathModel, Texture *textu
                 buttonsToRender = MAIN_BUTTONS;
         }
 
-        if(event.mouse[SDL_BUTTON_RIGHT] == 1 && !definingOrigin)
+        if(event.mouse[SDL_BUTTON_RIGHT] == 1 && !definingOrigin && stateSelection == SELECTED && editingAnimation != 0)
         {
-            if(indexMemberAffected != -1 && indexFaceAffected != -1)
+            if(indexMemberSelected != -1 && indexFaceAffected != -1)
             {
                 modelSelected = 1;
 
                 if(strlen(currentEditionAnimation) > 0)
                 {
-                    dimensionResized = editMemberAnimation(model, currentEditionAnimation, typeAnimation, indexMemberAffected, indexFaceAffected);
+                    dimensionResized = editMemberAnimation(model, currentEditionAnimation, typeAnimation, indexMemberSelected, indexFaceAffected, &indexMovement);
                 }
             }
         }
 
-        if((event.mouse[SDL_BUTTON_RIGHT] == 1 || event.mouse[SDL_BUTTON_LEFT] == 1) && definingOrigin && indexFaceAffected != -1 && indexMemberAffected != -1)
+        if((event.mouse[SDL_BUTTON_RIGHT] == 1 || event.mouse[SDL_BUTTON_LEFT] == 1) && definingOrigin && indexFaceAffected != -1 && indexMemberSelected != -1 && stateSelection == SELECTED)
         {
-            attribMemberOrigin(model, origin, indexMemberAffected);
+            attribMemberOrigin(model, origin, indexMemberSelected);
             definingOrigin = 0;
             addStringToText(&editionButton[3].text, "Define Origin");
             editionButton[3].weight = getWeightString(editionButton[3].text, weightLetter) + 10;
+            event.mouse[SDL_BUTTON_RIGHT] = 0;
+            event.mouse[SDL_BUTTON_LEFT] = 0;
+        }
+
+        if((event.mouse[SDL_BUTTON_RIGHT] == 1 || event.mouse[SDL_BUTTON_LEFT] == 1) && indexFaceAffected != -1 && indexMemberAffected != -1 && stateSelection == SELECTING)
+        {
+            indexMemberSelected = indexMemberAffected;
+            indexCurrentAnimation = searchAnimation(model, currentEditionAnimation);
+            stateSelection = SELECTED;
+            addStringToText(&toolButton[0].text, "Stop Selection");
+            toolButton[0].weight = getWeightString(toolButton[0].text, weightLetter) + 10;
+            addStringToText(&textAdvice, "Define a value for the movement");
+
             event.mouse[SDL_BUTTON_RIGHT] = 0;
             event.mouse[SDL_BUTTON_LEFT] = 0;
         }
@@ -428,16 +628,16 @@ int editAnimations(Model *model, char *mainPath, char *pathModel, Texture *textu
                 collisionCursorModelEditor(&indexMemberAffected, &indexFaceAffected);
             }
 
-            if(!modelSelected)
+            if(!modelSelected && stateSelection == SELECTED && indexMemberAffected != -1)
             {
                 clearScene();
                 modeRender(RENDER_3D, &pos, &target, FOV);
 
-                renderModel(model, COLLISION_MODE_ANIMATOR);
-                collisionCursorModelAnimator(0, &indexFaceAffected, &indexAreaSelected);
-                if(definingOrigin == 1 && indexFaceAffected != -1 && indexAreaSelected != -1 && indexMemberAffected != -1 && indexFaceAffected < 6 && indexAreaSelected < PRECISION_COLLISION * PRECISION_COLLISION && indexMemberAffected < model->nbMembers)
+                renderMember(model, indexMemberSelected, COLLISION_MODE_ANIMATOR);
+                collisionCursorModelAnimator(&indexFaceAffected, &indexAreaSelected);
+                if(definingOrigin == 1 && indexFaceAffected != -1 && indexAreaSelected != -1 && indexMemberSelected != -1 && indexFaceAffected < 6 && indexAreaSelected < PRECISION_COLLISION * PRECISION_COLLISION && indexMemberAffected < model->nbMembers)
                 {
-                    origin = defineCubeOrigin(model, indexMemberAffected, indexFaceAffected, indexAreaSelected);
+                    origin = defineCubeOrigin(model, indexMemberSelected, indexFaceAffected, indexAreaSelected);
                 }
             }
 
@@ -450,7 +650,17 @@ int editAnimations(Model *model, char *mainPath, char *pathModel, Texture *textu
             clearScene();
             modeRender(RENDER_3D, &pos, &target, FOV);
 
-            renderModel(model, RENDER_MODE);
+            if(stateSelection != SELECTED)
+            {
+                renderModel(model, RENDER_MODE);
+            }
+            else
+            {
+                if(indexMemberSelected != -1)
+                {
+                    renderMember(model, indexMemberSelected, RENDER_MODE);
+                }
+            }
             if(definingOrigin)
             {
                 glPushMatrix();
@@ -489,9 +699,9 @@ int editAnimations(Model *model, char *mainPath, char *pathModel, Texture *textu
             textCurrentEditionAnimation.nbChar = strlen(textCurrentEditionAnimation.string);
 
             if(model->nbAnims == 0)
-                renderMenuAnimator(textureText, weightLetter, buttonsToRender, mainButton, fileButton, editionButton, animationButton, toolButton, NUMBER_ANIMATION_BUTTONS_ANIMATOR, &textCurrentEditionAnimation, &textDimensionResized);
+                renderMenuAnimator(textureText, weightLetter, buttonsToRender, mainButton, fileButton, editionButton, animationButton, toolButton, NUMBER_ANIMATION_BUTTONS_ANIMATOR, &textCurrentEditionAnimation, &textDimensionResized, &textAdvice);
             else
-                renderMenuAnimator(textureText, weightLetter, buttonsToRender, mainButton, fileButton, editionButton, animationButton, toolButton, model->nbAnims + 1, &textCurrentEditionAnimation, &textDimensionResized);
+                renderMenuAnimator(textureText, weightLetter, buttonsToRender, mainButton, fileButton, editionButton, animationButton, toolButton, model->nbAnims + 2, &textCurrentEditionAnimation, &textDimensionResized, &textAdvice);
 
             refreshScene();
 
@@ -502,7 +712,7 @@ int editAnimations(Model *model, char *mainPath, char *pathModel, Texture *textu
             SDL_Delay(15 - (actualTicks - previousTicks));
         }
 
-        for(i = 1; i < model->nbAnims + 1; i++)
+        for(i = 2; i < model->nbAnims + 2; i++)
         {
             if(animationButton[i].textInput == 1)
             {
@@ -511,13 +721,13 @@ int editAnimations(Model *model, char *mainPath, char *pathModel, Texture *textu
                 {
                     animationButton[i].textInput = 0;
 
-                    if(strcmp(model->animation[i - 1]->animationName, animationPlaying) == 0)
+                    if(strcmp(model->animation[i - 2]->animationName, animationPlaying) == 0)
                     {
                         sprintf(animationPlaying, "%s", animationButton[i].text.string);
                         sprintf(currentEditionAnimation, "%s", animationButton[i].text.string);
                     }
 
-                    sprintf(model->animation[i - 1]->animationName, "%s", animationButton[i].text.string);
+                    sprintf(model->animation[i - 2]->animationName, "%s", animationButton[i].text.string);
 
                     SDL_EnableUNICODE(0);
                 }
@@ -529,11 +739,12 @@ int editAnimations(Model *model, char *mainPath, char *pathModel, Texture *textu
     free(fileButton);
     free(editionButton);
     free(animationButton);
+    free(toolButton);
 
     return dataReturn;
 }
 
-void renderMenuAnimator(Texture *textureText, int *weightLetter, int buttonsToRender, Button *mainButton, Button *fileButton, Button *editionButton, Button *animationButton, Button *toolButton, int nbAnimationButtonRendered, Text *currentAnimationName, Text *textDimensionResized)
+void renderMenuAnimator(Texture *textureText, int *weightLetter, int buttonsToRender, Button *mainButton, Button *fileButton, Button *editionButton, Button *animationButton, Button *toolButton, int nbAnimationButtonRendered, Text *currentAnimationName, Text *textDimensionResized, Text *textAdvice)
 {
     int i;
 
@@ -566,7 +777,7 @@ void renderMenuAnimator(Texture *textureText, int *weightLetter, int buttonsToRe
             }
             break;
         case TOOL_BUTTONS:
-            for(i = 0; i < NUMBER_EDITION_BUTTONS_ANIMATOR; i++)
+            for(i = 0; i < NUMBER_TOOL_BUTTONS_ANIMATOR; i++)
             {
                 renderButton(&toolButton[i], textureText);
             }
@@ -577,12 +788,15 @@ void renderMenuAnimator(Texture *textureText, int *weightLetter, int buttonsToRe
 
     writeText(textureText, *currentAnimationName, weightLetter, windowWidth - getWeightString(*currentAnimationName, weightLetter) - 5, windowHeight - 21);
     writeText(textureText, *textDimensionResized, weightLetter, windowWidth - getWeightString(*textDimensionResized, weightLetter) - 5, windowHeight - 37);
+    writeText(textureText, *textAdvice, weightLetter, windowWidth - getWeightString(*textAdvice, weightLetter) - 5, windowHeight - 58);
 
     glPopMatrix();
 }
 
 int addAnimation(Model *model, char *animationName)
 {
+    int i;
+
     if(model->nbAnims < ANIMS_MAX)
     {
         model->animation[model->nbAnims] = malloc(sizeof(Animation));
@@ -592,9 +806,21 @@ int addAnimation(Model *model, char *animationName)
             printf("Error allocating animation's memory\n");
             return 0;
         }
-        model->animation[model->nbAnims]->nbMembersAffected = 0;
+        model->animation[model->nbAnims]->nbMovements = 0;
         model->animation[model->nbAnims]->lastUpdate = -1;
+        model->animation[model->nbAnims]->isReversing = 0;
         sprintf(model->animation[model->nbAnims]->animationName, "%s", animationName);
+
+        for(i = 0; i < MEMBERS_MAX; i++)
+        {
+            model->animation[model->nbAnims]->basicValueEdited[i] = 0;
+            model->animation[model->nbAnims]->firstValueEdited[i] = 0;
+            model->animation[model->nbAnims]->secondValueEdited[i] = 0;
+            model->animation[model->nbAnims]->initialPhase[i] = INCREASING;
+            model->animation[model->nbAnims]->currentPhase[i] = INCREASING;
+            model->animation[model->nbAnims]->period[i] = 500;
+            model->animation[model->nbAnims]->phaseChanged[i] = 0;
+        }
 
         model->nbAnims++;
 
@@ -632,7 +858,7 @@ int removeAnimation(Model *model, char *animationName)
     return 1;
 }
 
-float editMemberAnimation(Model *model, char *animationName, int typeAnimation, int indexMemberAffected, int indexFaceAffected)
+float editMemberAnimation(Model *model, char *animationName, int typeAnimation, int indexMemberAffected, int indexFaceAffected, int *indexMovement)
 {
     float *dataToEdit = NULL;
     int indexAnimation = -1;
@@ -691,33 +917,66 @@ float editMemberAnimation(Model *model, char *animationName, int typeAnimation, 
         }
     }
 
-    if(event.mouse[SDL_BUTTON_RIGHT] == 1)
+    if((*indexMovement) == -1)
     {
-        if(typeAnimation == TRANSLATION_ANIMATION)
+        (*indexMovement) = searchMovement(model, indexAnimation, indexMemberAffected, axisAnimated, typeAnimation);
+
+        if((*indexMovement) == -1)
         {
-            if(dataToEdit != &model->translation[indexMemberAffected]->y)
+            (*indexMovement) = getFreeMovement(model, indexAnimation);
+
+            if((*indexMovement) == -1)
             {
-                (*dataToEdit) += event.xrel * 0.005;
+                return -1;
             }
-            else
-            {
-                (*dataToEdit) -= event.yrel * 0.005;
-            }
-        }
-        if(typeAnimation == ROTATION_ANIMATION)
-        {
-            (*dataToEdit) += event.xrel;
-            if((*dataToEdit) > 180)
-                (*dataToEdit) = -180;
-            else if((*dataToEdit) < -180)
-                (*dataToEdit) = 180;
         }
     }
+
+    if(event.mouse[SDL_BUTTON_RIGHT] == 1)
+    {
+        if(model->animation[indexAnimation]->basicValueEdited[(*indexMovement)] == 0)
+        {
+            model->animation[indexAnimation]->nbMovements++;
+            getBasicValue(model, 0, indexAnimation, typeAnimation, axisAnimated);
+            model->animation[indexAnimation]->basicValueEdited[(*indexMovement)] = 1;
+            model->animation[indexAnimation]->typeAnimation[(*indexMovement)] = typeAnimation;
+            model->animation[indexAnimation]->axisAnimated[(*indexMovement)] = axisAnimated;
+            model->animation[indexAnimation]->indexMemberAffected[(*indexMovement)] = indexMemberAffected;
+        }
+        else if(model->animation[indexAnimation]->axisAnimated[(*indexMovement)] == axisAnimated)
+        {
+            if(typeAnimation == TRANSLATION_ANIMATION)
+            {
+                if(dataToEdit != &model->translation[indexMemberAffected]->y)
+                {
+                    (*dataToEdit) += event.xrel * 0.005;
+                }
+                else
+                {
+                    (*dataToEdit) -= event.yrel * 0.005;
+                }
+            }
+            if(typeAnimation == ROTATION_ANIMATION)
+            {
+                (*dataToEdit) += event.xrel;
+                if((*dataToEdit) > 180)
+                    (*dataToEdit) = -180;
+                else if((*dataToEdit) < -180)
+                    (*dataToEdit) = 180;
+            }
+        }
+    }
+
+    if(event.mouse[SDL_BUTTON_RIGHT] == 0 && model->animation[indexAnimation]->basicValueEdited[(*indexMovement)] == 1)
+    {
+        (*dataToEdit) = model->animation[indexAnimation]->basicValue[(*indexMovement)];
+    }
+
 
     return (*dataToEdit);
 }
 
-void collisionCursorModelAnimator(int indexMemberAffected, int *indexFaceAffected, int *indexAreaSelected)
+void collisionCursorModelAnimator(int *indexFaceAffected, int *indexAreaSelected)
 {
     GLubyte pixel[3];
 
@@ -878,5 +1137,189 @@ void attribMemberOrigin(Model *model, Point3D origin, int indexMemberAffected)
             model->member[i]->face[j].point[h].coordFileTexture.x = tmp.face[j].point[h].coordFileTexture.x;
             model->member[i]->face[j].point[h].coordFileTexture.y = tmp.face[j].point[h].coordFileTexture.y;
         }
+    }
+}
+
+void getBasicValue(Model *model, int indexMemberSelected, int indexCurrentAnimation, int typeAnimation, int axisAnimated)
+{
+    float *value = NULL;
+
+    if(typeAnimation == ROTATION_ANIMATION)
+    {
+        switch(axisAnimated)
+        {
+            case X_AXIS:
+                value = &model->rotation[indexMemberSelected]->x;
+                break;
+            case Y_AXIS:
+                value = &model->rotation[indexMemberSelected]->y;
+                break;
+            case Z_AXIS:
+                value = &model->rotation[indexMemberSelected]->z;
+                break;
+        }
+    }
+    else if(typeAnimation == TRANSLATION_ANIMATION)
+    {
+        switch(axisAnimated)
+        {
+            case X_AXIS:
+                value = &model->translation[indexMemberSelected]->x;
+                break;
+            case Y_AXIS:
+                value = &model->translation[indexMemberSelected]->y;
+                break;
+            case Z_AXIS:
+                value = &model->translation[indexMemberSelected]->z;
+                break;
+        }
+    }
+
+    model->animation[indexCurrentAnimation]->basicValue[indexMemberSelected] = (*value);
+}
+
+int affectAnimationValue(Model *model, int indexAnimation, int indexMovement, int indexMemberAffected)
+{
+    float *value = NULL;
+    float tmp;
+
+    if(model->animation[indexAnimation]->typeAnimation[indexMovement] == ROTATION_ANIMATION)
+    {
+        switch(model->animation[indexAnimation]->axisAnimated[indexMovement])
+        {
+            case X_AXIS:
+                value = &model->rotation[indexMemberAffected]->x;
+                break;
+            case Y_AXIS:
+                value = &model->rotation[indexMemberAffected]->y;
+                break;
+            case Z_AXIS:
+                value = &model->rotation[indexMemberAffected]->z;
+                break;
+        }
+    }
+    else if(model->animation[indexAnimation]->typeAnimation[indexMovement] == TRANSLATION_ANIMATION)
+    {
+        switch(model->animation[indexAnimation]->axisAnimated[indexMovement])
+        {
+            case X_AXIS:
+                value = &model->translation[indexMemberAffected]->x;
+                break;
+            case Y_AXIS:
+                value = &model->translation[indexMemberAffected]->y;
+                break;
+            case Z_AXIS:
+                value = &model->translation[indexMemberAffected]->z;
+                break;
+        }
+    }
+    else
+    {
+        return 0;
+    }
+
+    if(model->animation[indexAnimation]->firstValueEdited[indexMovement] == 1 && model->animation[indexAnimation]->secondValueEdited[indexMovement] == 0)
+    {
+        model->animation[indexAnimation]->maximalValue[indexMovement] = (*value);
+
+        if(model->animation[indexAnimation]->maximalValue[indexMovement] < model->animation[indexAnimation]->minimalValue[indexMovement])
+        {
+            tmp = model->animation[indexAnimation]->maximalValue[indexMovement];
+            model->animation[indexAnimation]->maximalValue[indexMovement] = model->animation[indexAnimation]->minimalValue[indexMovement];
+            model->animation[indexAnimation]->minimalValue[indexMovement] = tmp;
+        }
+        model->animation[indexAnimation]->secondValueEdited[indexMovement] = 1;
+        (*value) = model->animation[indexAnimation]->basicValue[indexMovement];
+    }
+    else
+    {
+        model->animation[indexAnimation]->minimalValue[indexMovement] = (*value);
+        model->animation[indexAnimation]->firstValueEdited[indexMovement] = 1;
+        (*value) = model->animation[indexAnimation]->basicValue[indexMovement];
+    }
+
+    return 1;
+}
+
+int searchMovement(Model *model, int indexAnimation, int indexMemberAffected, int axisAnimated, int typeAnimation)
+{
+    int i;
+
+    for(i = 0; i < model->animation[indexAnimation]->nbMovements; i++)
+    {
+        if(model->animation[indexAnimation]->axisAnimated[i] == axisAnimated &&
+            model->animation[indexAnimation]->indexMemberAffected[i] == indexMemberAffected &&
+            model->animation[indexAnimation]->typeAnimation[i] == typeAnimation)
+        {
+            return i;
+        }
+    }
+
+    return -1;
+}
+
+int getFreeMovement(Model *model, int indexAnimation)
+{
+    int i;
+
+    if(model->animation[indexAnimation]->nbMovements >= MEMBERS_MAX)
+    {
+        return -1;
+    }
+
+    for(i = 0; i < MEMBERS_MAX; i++)
+    {
+        if(model->animation[indexAnimation]->basicValueEdited[i] == 0)
+        {
+            return i;
+        }
+    }
+
+    return -1;
+}
+
+void resetTransformationMember(Model *model, int indexCurrentAnimation, int indexMovement)
+{
+    float basicValue = model->animation[indexCurrentAnimation]->basicValue[indexMovement];
+
+    if(model->animation[indexCurrentAnimation]->basicValueEdited[indexMovement] == 1)
+    {
+        if(model->animation[indexCurrentAnimation]->typeAnimation[indexMovement] == ROTATION_ANIMATION)
+        {
+            switch(model->animation[indexCurrentAnimation]->axisAnimated[indexMovement])
+            {
+                case X_AXIS:
+                    model->rotation[model->animation[indexCurrentAnimation]->indexMemberAffected[indexMovement]]->x = basicValue;
+                    break;
+                case Y_AXIS:
+                    model->rotation[model->animation[indexCurrentAnimation]->indexMemberAffected[indexMovement]]->y = basicValue;
+                    break;
+                case Z_AXIS:
+                    model->rotation[model->animation[indexCurrentAnimation]->indexMemberAffected[indexMovement]]->z = basicValue;
+                    break;
+            }
+        }
+
+        else if(model->animation[indexCurrentAnimation]->typeAnimation[indexMovement] == TRANSLATION_ANIMATION)
+        {
+            switch(model->animation[indexCurrentAnimation]->axisAnimated[indexMovement])
+            {
+                case X_AXIS:
+                    model->translation[model->animation[indexCurrentAnimation]->indexMemberAffected[indexMovement]]->x = basicValue;
+                    break;
+                case Y_AXIS:
+                    model->translation[model->animation[indexCurrentAnimation]->indexMemberAffected[indexMovement]]->y = basicValue;
+                    break;
+                case Z_AXIS:
+                    model->translation[model->animation[indexCurrentAnimation]->indexMemberAffected[indexMovement]]->z = basicValue;
+                    break;
+            }
+        }
+
+        model->animation[indexCurrentAnimation]->basicValueEdited[indexMovement] = 0;
+        model->animation[indexCurrentAnimation]->firstValueEdited[indexMovement] = 0;
+        model->animation[indexCurrentAnimation]->secondValueEdited[indexMovement] = 0;
+
+        model->animation[indexCurrentAnimation]->nbMovements--;
     }
 }
