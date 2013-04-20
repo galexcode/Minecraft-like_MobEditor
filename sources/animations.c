@@ -564,8 +564,13 @@ int editAnimations(Model *model, char *mainPath, char *pathModel, Texture *textu
                 if(indexLastMovement != -1)
                 {
                     model->animation[indexCurrentAnimation]->period[indexLastMovement] = period;
+                    addStringToText(&textAdvice, "Period defined");
                 }
-                addStringToText(&textAdvice, "Period defined");
+
+                else
+                {
+                    addStringToText(&textAdvice, "Period defined for the next movement");
+                }
             }
 
             event.mouse[SDL_BUTTON_LEFT] = 0;
@@ -576,8 +581,6 @@ int editAnimations(Model *model, char *mainPath, char *pathModel, Texture *textu
             if(event.keydown[SDLK_UP] == 1)
             {
                 period++;
-                toolButton[3].text.nbChar = sprintf(toolButton[3].text.string, "Period : %d ms\n", period) - 1;
-                toolButton[3].weight = getWeightString(toolButton[3].text, weightLetter) + 10;
                 event.keydown[SDLK_UP] = 0;
             }
             else if(event.keydown[SDLK_DOWN] == 1)
@@ -585,8 +588,6 @@ int editAnimations(Model *model, char *mainPath, char *pathModel, Texture *textu
                 if(period > 1)
                     period--;
 
-                toolButton[3].text.nbChar = sprintf(toolButton[3].text.string, "Period : %d ms\n", period) - 1;
-                toolButton[3].weight = getWeightString(toolButton[3].text, weightLetter) + 10;
                 event.keydown[SDLK_DOWN] = 0;
             }
             else if(event.keydown[SDLK_LEFT] == 1)
@@ -594,17 +595,16 @@ int editAnimations(Model *model, char *mainPath, char *pathModel, Texture *textu
                 if(period > 10)
                     period -= 10;
 
-                toolButton[3].text.nbChar = sprintf(toolButton[3].text.string, "Period : %d ms\n", period) - 1;
-                toolButton[3].weight = getWeightString(toolButton[3].text, weightLetter) + 10;
                 event.keydown[SDLK_LEFT] = 0;
             }
             else if(event.keydown[SDLK_RIGHT] == 1)
             {
                 period += 10;
-                toolButton[3].text.nbChar = sprintf(toolButton[3].text.string, "Period : %d ms\n", period) - 1;
-                toolButton[3].weight = getWeightString(toolButton[3].text, weightLetter) + 10;
                 event.keydown[SDLK_RIGHT] = 0;
             }
+
+            toolButton[3].text.nbChar = sprintf(toolButton[3].text.string, "Period : %d ms\n", period) - 1;
+            toolButton[3].weight = getWeightString(toolButton[3].text, weightLetter) + 10;
 
             if(event.keydown[SDLK_RETURN] == 1)
             {
@@ -612,8 +612,12 @@ int editAnimations(Model *model, char *mainPath, char *pathModel, Texture *textu
                 if(indexLastMovement != -1)
                 {
                     model->animation[indexCurrentAnimation]->period[indexLastMovement] = period;
+                    addStringToText(&textAdvice, "Period defined");
                 }
-                addStringToText(&textAdvice, "Period defined");
+                else
+                {
+                    addStringToText(&textAdvice, "Period defined for the next movement");
+                }
             }
         }
 
@@ -672,6 +676,8 @@ int editAnimations(Model *model, char *mainPath, char *pathModel, Texture *textu
             editionButton[3].weight = getWeightString(editionButton[3].text, weightLetter) + 10;
             event.mouse[SDL_BUTTON_RIGHT] = 0;
             event.mouse[SDL_BUTTON_LEFT] = 0;
+
+            addStringToText(&textAdvice, "Origin defined");
         }
 
         if((event.mouse[SDL_BUTTON_RIGHT] == 1 || event.mouse[SDL_BUTTON_LEFT] == 1) && indexFaceAffected != -1 && indexMemberAffected != -1 && stateSelection == SELECTING)
@@ -806,7 +812,7 @@ int editAnimations(Model *model, char *mainPath, char *pathModel, Texture *textu
 
                     sprintf(currentEditionAnimation, "%s", animationButton[i].text.string);
                     sprintf(model->animation[i - 2]->animationName, "%s", animationButton[i].text.string);
-
+                    animationButton[i].weight = getWeightString(animationButton[i].text, weightLetter) + 10;
                     SDL_EnableUNICODE(0);
                 }
             }
