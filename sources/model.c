@@ -573,9 +573,6 @@ int animateModel(Model *model, char *nameAnimation)
         model->animation[indexAnimation]->lastUpdate = SDL_GetTicks();
     }
 
-    /*printf("i : %d\n", indexAnimation);
-    printf("nb : %d\n", model->animation[indexAnimation]->nbMovements);*/
-
     for(i = 0; i < model->animation[indexAnimation]->nbMovements; i++)
     {
         if(model->animation[indexAnimation]->typeAnimation[i] == ROTATION_ANIMATION)
@@ -609,17 +606,17 @@ int animateModel(Model *model, char *nameAnimation)
             }
         }
 
-        /*printf("min : %f\n", model->animation[indexAnimation]->minimalValue[i]);
-        printf("max : %f\n", model->animation[indexAnimation]->maximalValue[i]);
-        printf("ima: %d\n", model->animation[indexAnimation]->indexMemberAffected[i]);
-        printf("per : %d\n", model->animation[indexAnimation]->period[i]);
-        printf("phasechanged : %d\n", model->animation[indexAnimation]->phaseChanged[i]);
-        printf("rev : %d\n", model->animation[indexAnimation]->isReversing);
-        printf("actual : %f\n", (*dataToAnimate));*/
-
         if(model->animation[indexAnimation]->currentPhase[i] == INCREASING)
         {
-            (*dataToAnimate) += ((actualTime - model->animation[indexAnimation]->lastUpdate) * (model->animation[indexAnimation]->maximalValue[i] - model->animation[indexAnimation]->minimalValue[i])) / model->animation[indexAnimation]->period[i];
+            if(model->animation[indexAnimation]->maximalValue[i] != model->animation[indexAnimation]->minimalValue[i])
+            {
+                (*dataToAnimate) += ((actualTime - model->animation[indexAnimation]->lastUpdate) * (model->animation[indexAnimation]->maximalValue[i] - model->animation[indexAnimation]->minimalValue[i])) / model->animation[indexAnimation]->period[i];
+            }
+            else
+            {
+                (*dataToAnimate) += (model->animation[indexAnimation]->basicValue[i] - model->animation[indexAnimation]->maximalValue[i]) / (float)(actualTime - model->animation[indexAnimation]->lastUpdate);
+                printf("%f\n", (*dataToAnimate));
+            }
 
             if((*dataToAnimate) >= model->animation[indexAnimation]->maximalValue[i] && model->animation[indexAnimation]->isReversing == 0)
             {
@@ -651,7 +648,14 @@ int animateModel(Model *model, char *nameAnimation)
 
         else if(model->animation[indexAnimation]->currentPhase[i] == DECREASING)
         {
-            (*dataToAnimate) -= ((actualTime - model->animation[indexAnimation]->lastUpdate) * (model->animation[indexAnimation]->maximalValue[i] - model->animation[indexAnimation]->minimalValue[i])) / model->animation[indexAnimation]->period[i];
+            if(model->animation[indexAnimation]->maximalValue[i] != model->animation[indexAnimation]->minimalValue[i])
+            {
+                (*dataToAnimate) -= ((actualTime - model->animation[indexAnimation]->lastUpdate) * (model->animation[indexAnimation]->maximalValue[i] - model->animation[indexAnimation]->minimalValue[i])) / model->animation[indexAnimation]->period[i];
+            }
+            else
+            {
+                (*dataToAnimate) -= (model->animation[indexAnimation]->basicValue[i] - model->animation[indexAnimation]->maximalValue[i]) / (float)(actualTime - model->animation[indexAnimation]->lastUpdate);
+            }
 
             if((*dataToAnimate) <= model->animation[indexAnimation]->minimalValue[i] && model->animation[indexAnimation]->isReversing == 0)
             {

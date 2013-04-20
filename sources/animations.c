@@ -318,6 +318,9 @@ int editAnimations(Model *model, char *mainPath, char *pathModel, Texture *textu
                         attribAnimationButtonsAnimator(animationButton, texButton);
                     }
 
+                    animationPlaying[0] = 0;
+                    currentEditionAnimation[0] = 0;
+
                     addStringToText(&textAdvice, "Animation removed");
                 }
                 else
@@ -529,6 +532,7 @@ int editAnimations(Model *model, char *mainPath, char *pathModel, Texture *textu
                             {
                                 resetTransformationMember(model, indexCurrentAnimation, indexMovement);
                             }
+                            addStringToText(&textAdvice, "Movement cancelled");
                         }
                         indexMovement = -1;
                     }
@@ -1235,11 +1239,18 @@ int affectAnimationValue(Model *model, int indexAnimation, int indexMovement, in
             tmp = model->animation[indexAnimation]->maximalValue[indexMovement];
             model->animation[indexAnimation]->maximalValue[indexMovement] = model->animation[indexAnimation]->minimalValue[indexMovement];
             model->animation[indexAnimation]->minimalValue[indexMovement] = tmp;
+            model->animation[indexAnimation]->initialPhase[indexMovement] = INCREASING;
+            model->animation[indexAnimation]->currentPhase[indexMovement] = INCREASING;
+        }
+        else
+        {
+            model->animation[indexAnimation]->initialPhase[indexMovement] = DECREASING;
+            model->animation[indexAnimation]->currentPhase[indexMovement] = DECREASING;
         }
         model->animation[indexAnimation]->secondValueEdited[indexMovement] = 1;
         (*value) = model->animation[indexAnimation]->basicValue[indexMovement];
     }
-    else
+    else if(model->animation[indexAnimation]->firstValueEdited[indexMovement] == 0)
     {
         model->animation[indexAnimation]->minimalValue[indexMovement] = (*value);
         model->animation[indexAnimation]->firstValueEdited[indexMovement] = 1;
