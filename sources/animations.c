@@ -34,8 +34,11 @@ int editAnimations(Model *model, char *mainPath, char *pathModel, Texture *textu
     int stateSelection = NONE;
     int editingAnimation = 0;
     int indexMemberSelected = -1;
-    int indexMovement = -1;
+    int indexMovement = -1, indexLastMovement = -1;
     int definingOrigin = 0;
+
+    int period = 500;
+    int getPeriod = 0;
 
     char currentEditionAnimation[SIZE_PATH_MAX] = {0};
     char animationPlaying[SIZE_PATH_MAX] = {0};
@@ -320,6 +323,8 @@ int editAnimations(Model *model, char *mainPath, char *pathModel, Texture *textu
 
                     animationPlaying[0] = 0;
                     currentEditionAnimation[0] = 0;
+                    indexMovement = -1;
+                    indexLastMovement = -1;
 
                     addStringToText(&textAdvice, "Animation removed");
                 }
@@ -478,7 +483,8 @@ int editAnimations(Model *model, char *mainPath, char *pathModel, Texture *textu
                     {
                         if(indexMovement != -1)
                         {
-                            affectAnimationValue(model, indexCurrentAnimation, indexMovement, indexMemberSelected);
+                            affectAnimationValue(model, indexCurrentAnimation, indexMovement, indexMemberSelected, period);
+
                             if(model->animation[indexCurrentAnimation]->firstValueEdited[indexMovement] == 1)
                             {
                                 addStringToText(&textAdvice, "Define a second value");
@@ -545,6 +551,72 @@ int editAnimations(Model *model, char *mainPath, char *pathModel, Texture *textu
             }
         }
 
+        if(toolButton[3].selected == 1 && event.mouse[SDL_BUTTON_LEFT] == 1)
+        {
+            if(getPeriod == 0)
+            {
+                getPeriod = 1;
+                addStringToText(&textAdvice, "Use arrows to define period to apply");
+            }
+            else
+            {
+                getPeriod = 0;
+                if(indexLastMovement != -1)
+                {
+                    model->animation[indexCurrentAnimation]->period[indexLastMovement] = period;
+                }
+                addStringToText(&textAdvice, "Period defined");
+            }
+
+            event.mouse[SDL_BUTTON_LEFT] = 0;
+        }
+
+        if(getPeriod == 1)
+        {
+            if(event.keydown[SDLK_UP] == 1)
+            {
+                period++;
+                toolButton[3].text.nbChar = sprintf(toolButton[3].text.string, "Period : %d ms\n", period) - 1;
+                toolButton[3].weight = getWeightString(toolButton[3].text, weightLetter) + 10;
+                event.keydown[SDLK_UP] = 0;
+            }
+            else if(event.keydown[SDLK_DOWN] == 1)
+            {
+                if(period > 1)
+                    period--;
+
+                toolButton[3].text.nbChar = sprintf(toolButton[3].text.string, "Period : %d ms\n", period) - 1;
+                toolButton[3].weight = getWeightString(toolButton[3].text, weightLetter) + 10;
+                event.keydown[SDLK_DOWN] = 0;
+            }
+            else if(event.keydown[SDLK_LEFT] == 1)
+            {
+                if(period > 10)
+                    period -= 10;
+
+                toolButton[3].text.nbChar = sprintf(toolButton[3].text.string, "Period : %d ms\n", period) - 1;
+                toolButton[3].weight = getWeightString(toolButton[3].text, weightLetter) + 10;
+                event.keydown[SDLK_LEFT] = 0;
+            }
+            else if(event.keydown[SDLK_RIGHT] == 1)
+            {
+                period += 10;
+                toolButton[3].text.nbChar = sprintf(toolButton[3].text.string, "Period : %d ms\n", period) - 1;
+                toolButton[3].weight = getWeightString(toolButton[3].text, weightLetter) + 10;
+                event.keydown[SDLK_RIGHT] = 0;
+            }
+
+            if(event.keydown[SDLK_RETURN] == 1)
+            {
+                getPeriod = 0;
+                if(indexLastMovement != -1)
+                {
+                    model->animation[indexCurrentAnimation]->period[indexLastMovement] = period;
+                }
+                addStringToText(&textAdvice, "Period defined");
+            }
+        }
+
         if(event.mouse[SDL_BUTTON_WHEELDOWN] == 1)
         {
             (*zoomModel) += 0.05;
@@ -587,6 +659,7 @@ int editAnimations(Model *model, char *mainPath, char *pathModel, Texture *textu
                 if(strlen(currentEditionAnimation) > 0)
                 {
                     dimensionResized = editMemberAnimation(model, currentEditionAnimation, typeAnimation, indexMemberSelected, indexFaceAffected, &indexMovement);
+                    indexLastMovement = indexMovement;
                 }
             }
         }
@@ -1190,7 +1263,7 @@ void getBasicValue(Model *model, int indexMemberSelected, int indexCurrentAnimat
     model->animation[indexCurrentAnimation]->basicValue[indexMemberSelected] = (*value);
 }
 
-int affectAnimationValue(Model *model, int indexAnimation, int indexMovement, int indexMemberAffected)
+int affectAnimationValue(Model *model, int indexAnimation, int indexMovement, int indexMemberAffected, int period)
 {
     float *value = NULL;
     float tmp;
@@ -1256,6 +1329,8 @@ int affectAnimationValue(Model *model, int indexAnimation, int indexMovement, in
         model->animation[indexAnimation]->firstValueEdited[indexMovement] = 1;
         (*value) = model->animation[indexAnimation]->basicValue[indexMovement];
     }
+
+    model->animation[indexAnimation]->period[indexMovement] = period;
 
     return 1;
 }
