@@ -13,5 +13,6 @@
     int stopAnimation(Model *model, char *nameAnimation);
     int searchAnimation(Model *model, char *animationName);
     void renderMember(Model *model, int indexMemberToRender, int mode);
+    int resetModelAnimation(Model *model, char *animationName);
 
 #endif

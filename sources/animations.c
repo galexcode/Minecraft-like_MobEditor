@@ -213,6 +213,10 @@ int editAnimations(Model *model, char *mainPath, char *pathModel, Texture *textu
                 if(openBrowser(buff.string, MODELS))
                 {
                     currentEditionAnimation[0] = 0;
+                    animationPlaying[0] = 0;
+                    indexMemberSelected = -1;
+                    indexMovement = -1;
+                    indexLastMovement = -1;
                     nextAnimation[0] = 0;
                     createModel(mainPath, buff.string, model);
                     sprintf(pathModel, buff.string);
@@ -243,14 +247,24 @@ int editAnimations(Model *model, char *mainPath, char *pathModel, Texture *textu
             }
             if(fileButton[1].selected == 1 && event.mouse[SDL_BUTTON_LEFT] == 1)
             {
-                if(saveModel(pathModel, model))
+                if(editingAnimation == 0)
                 {
-                    model->saved = 1;
-                    addStringToText(&textAdvice, "Model saved");
+                    animationPlaying[0] = 0;
+                    resetModelAnimation(model, currentEditionAnimation);
+
+                    if(saveModel(pathModel, model))
+                    {
+                        model->saved = 1;
+                        addStringToText(&textAdvice, "Model saved");
+                    }
+                    else
+                    {
+                        addStringToText(&textAdvice, "Model not saved, path invalid");
+                    }
                 }
                 else
                 {
-                    addStringToText(&textAdvice, "Model not saved, path invalid");
+                    addStringToText(&textAdvice, "You cannot save a model while editing animation");
                 }
                 event.mouse[SDL_BUTTON_LEFT] = 0;
             }
@@ -470,11 +484,19 @@ int editAnimations(Model *model, char *mainPath, char *pathModel, Texture *textu
                         addStringToText(&toolButton[2].text, "Start Editing Movement");
                         toolButton[2].weight = getWeightString(toolButton[2].text, weightLetter) + 10;
                         indexMemberSelected = -1;
-                        indexMovement = -1;
 
                         definingOrigin = 0;
                         addStringToText(&editionButton[3].text, "Define Origin");
                         editionButton[3].weight = getWeightString(editionButton[3].text, weightLetter) + 10;
+
+                        if(indexMovement != -1)
+                        {
+                            if(model->animation[indexCurrentAnimation]->secondValueEdited[indexMovement] == 0)
+                            {
+                                resetTransformationMember(model, indexCurrentAnimation, indexMovement);
+                            }
+                        }
+                        indexMovement = -1;
                     }
                 }
                 else

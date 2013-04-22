@@ -104,50 +104,53 @@ int loadModel(char *mainPath, char *path, Model *model)
 
     fscanf(file, "nbAnims = %d\n\n", &model->nbAnims);
 
-    for(i = 0; i < model->nbAnims; i++)
+    if(model->nbAnims > 0)
     {
-        model->animation[i] = malloc(sizeof(Animation));
-
-        if(model->animation[i] == NULL)
+        for(i = 0; i < model->nbAnims; i++)
         {
-            printf("Error allocating memory\n");
-            return 0;
-        }
-    }
+            model->animation[i] = malloc(sizeof(Animation));
 
-    for(i = 0; i < model->nbAnims; i++)
-    {
-        fscanf(file, "anim %d\n", &i);
-        fscanf(file, "name : %s\n", model->animation[i]->animationName);
-        model->animation[i]->isReversing = 0;
-        fscanf(file, "nbMovements : %d\n\n", &model->animation[i]->nbMovements);
-
-        for(j = 0; j < MEMBERS_MAX; j++)
-        {
-            model->animation[i]->firstValueEdited[j] = 0;
-            model->animation[i]->secondValueEdited[j] = 0;
-            model->animation[i]->basicValueEdited[j] = 0;
+            if(model->animation[i] == NULL)
+            {
+                printf("Error allocating memory\n");
+                return 0;
+            }
         }
 
-        for(j = 0; j < model->animation[i]->nbMovements; j++)
+        for(i = 0; i < model->nbAnims; i++)
         {
-            fscanf(file, "index %d : %d\n", &j, &model->animation[i]->indexMemberAffected[j]);
-            fscanf(file, "typeAnimation : %d\n", &model->animation[i]->typeAnimation[j]);
-            fscanf(file, "axisAnimated : %d\n", &model->animation[i]->axisAnimated[j]);
-            fscanf(file, "minimalValue : %f\n", &model->animation[i]->minimalValue[j]);
-            fscanf(file, "maximalValue : %f\n", &model->animation[i]->maximalValue[j]);
-            fscanf(file, "basicValue : %f\n", &model->animation[i]->basicValue[j]);
-            fscanf(file, "phase : %d\n", &model->animation[i]->initialPhase[j]);
-            fscanf(file, "period : %d\n\n", &model->animation[i]->period[j]);
+            fscanf(file, "anim %d\n", &i);
+            fscanf(file, "name : %s\n", model->animation[i]->animationName);
+            model->animation[i]->isReversing = 0;
+            fscanf(file, "nbMovements : %d\n\n", &model->animation[i]->nbMovements);
 
-            model->animation[i]->currentPhase[j] = model->animation[i]->initialPhase[j];
-            model->animation[i]->phaseChanged[j] = 0;
-            model->animation[i]->firstValueEdited[j] = 1;
-            model->animation[i]->secondValueEdited[j] = 1;
-            model->animation[i]->basicValueEdited[j] = 1;
+            for(j = 0; j < MEMBERS_MAX; j++)
+            {
+                model->animation[i]->firstValueEdited[j] = 0;
+                model->animation[i]->secondValueEdited[j] = 0;
+                model->animation[i]->basicValueEdited[j] = 0;
+            }
+
+            for(j = 0; j < model->animation[i]->nbMovements; j++)
+            {
+                fscanf(file, "index %d : %d\n", &j, &model->animation[i]->indexMemberAffected[j]);
+                fscanf(file, "typeAnimation : %d\n", &model->animation[i]->typeAnimation[j]);
+                fscanf(file, "axisAnimated : %d\n", &model->animation[i]->axisAnimated[j]);
+                fscanf(file, "minimalValue : %f\n", &model->animation[i]->minimalValue[j]);
+                fscanf(file, "maximalValue : %f\n", &model->animation[i]->maximalValue[j]);
+                fscanf(file, "basicValue : %f\n", &model->animation[i]->basicValue[j]);
+                fscanf(file, "phase : %d\n", &model->animation[i]->initialPhase[j]);
+                fscanf(file, "period : %d\n\n", &model->animation[i]->period[j]);
+
+                model->animation[i]->currentPhase[j] = model->animation[i]->initialPhase[j];
+                model->animation[i]->phaseChanged[j] = 0;
+                model->animation[i]->firstValueEdited[j] = 1;
+                model->animation[i]->secondValueEdited[j] = 1;
+                model->animation[i]->basicValueEdited[j] = 1;
+            }
+
+            model->animation[i]->lastUpdate = -1;
         }
-
-        model->animation[i]->lastUpdate = -1;
     }
 
     fclose(file);
@@ -625,7 +628,6 @@ int animateModel(Model *model, char *nameAnimation)
             else
             {
                 (*dataToAnimate) += (model->animation[indexAnimation]->basicValue[i] - model->animation[indexAnimation]->maximalValue[i]) / (float)(actualTime - model->animation[indexAnimation]->lastUpdate);
-                printf("%f\n", (*dataToAnimate));
             }
 
             if((*dataToAnimate) >= model->animation[indexAnimation]->maximalValue[i] && model->animation[indexAnimation]->isReversing == 0)
@@ -750,4 +752,57 @@ int searchAnimation(Model *model, char *animationName)
     }
 
     return indexAnimation;
+}
+
+int resetModelAnimation(Model *model, char *animationName)
+{
+    int indexAnimation = -1;
+    float (*dataToReset) = NULL;
+    int i;
+
+    indexAnimation = searchAnimation(model, animationName);
+
+    if(indexAnimation == -1)
+    {
+        printf("Animation not found : %s\n", animationName);
+        return 0;
+    }
+
+    for(i = 0; i < model->animation[indexAnimation]->nbMovements; i++)
+    {
+        if(model->animation[indexAnimation]->typeAnimation[i] == ROTATION_ANIMATION)
+        {
+            switch(model->animation[indexAnimation]->axisAnimated[i])
+            {
+                case X:
+                    dataToReset = &model->rotation[model->animation[indexAnimation]->indexMemberAffected[i]]->x;
+                    break;
+                case Y:
+                    dataToReset = &model->rotation[model->animation[indexAnimation]->indexMemberAffected[i]]->y;
+                    break;
+                case Z:
+                    dataToReset = &model->rotation[model->animation[indexAnimation]->indexMemberAffected[i]]->z;
+                    break;
+            }
+        }
+        else if(model->animation[indexAnimation]->typeAnimation[i] == TRANSLATION_ANIMATION)
+        {
+            switch(model->animation[indexAnimation]->axisAnimated[i])
+            {
+                case X:
+                    dataToReset = &model->translation[model->animation[indexAnimation]->indexMemberAffected[i]]->x;
+                    break;
+                case Y:
+                    dataToReset = &model->translation[model->animation[indexAnimation]->indexMemberAffected[i]]->y;
+                    break;
+                case Z:
+                    dataToReset = &model->translation[model->animation[indexAnimation]->indexMemberAffected[i]]->z;
+                    break;
+            }
+        }
+
+        (*dataToReset )= model->animation[indexAnimation]->basicValue[i];
+    }
+
+    return 1;
 }
