@@ -246,7 +246,11 @@ int editAnimations(Model *model, char *mainPath, char *pathModel, Texture *textu
                 if(saveModel(pathModel, model))
                 {
                     model->saved = 1;
-                    addStringToText(&fileButton[1].text, "Saved");
+                    addStringToText(&textAdvice, "Model saved");
+                }
+                else
+                {
+                    addStringToText(&textAdvice, "Model not saved, path invalid");
                 }
                 event.mouse[SDL_BUTTON_LEFT] = 0;
             }
@@ -258,8 +262,12 @@ int editAnimations(Model *model, char *mainPath, char *pathModel, Texture *textu
                     if(saveModel(buff.string, model))
                     {
                         model->saved = 1;
-                        addStringToText(&fileButton[1].text, "Saved");
+                        addStringToText(&textAdvice, "Model saved");
                     }
+                }
+                else
+                {
+                    addStringToText(&textAdvice, "Model not saved, path invalid");
                 }
 
                 event.mouse[SDL_BUTTON_LEFT] = 0;
@@ -503,6 +511,11 @@ int editAnimations(Model *model, char *mainPath, char *pathModel, Texture *textu
                                 indexMovement = -1;
                             }
                         }
+                        else
+                        {
+                            addStringToText(&textAdvice, "No movement selected");
+                        }
+
                     }
                     else
                     {

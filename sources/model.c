@@ -122,6 +122,13 @@ int loadModel(char *mainPath, char *path, Model *model)
         model->animation[i]->isReversing = 0;
         fscanf(file, "nbMovements : %d\n\n", &model->animation[i]->nbMovements);
 
+        for(j = 0; j < MEMBERS_MAX; j++)
+        {
+            model->animation[i]->firstValueEdited[j] = 0;
+            model->animation[i]->secondValueEdited[j] = 0;
+            model->animation[i]->basicValueEdited[j] = 0;
+        }
+
         for(j = 0; j < model->animation[i]->nbMovements; j++)
         {
             fscanf(file, "index %d : %d\n", &j, &model->animation[i]->indexMemberAffected[j]);
@@ -135,6 +142,9 @@ int loadModel(char *mainPath, char *path, Model *model)
 
             model->animation[i]->currentPhase[j] = model->animation[i]->initialPhase[j];
             model->animation[i]->phaseChanged[j] = 0;
+            model->animation[i]->firstValueEdited[j] = 1;
+            model->animation[i]->secondValueEdited[j] = 1;
+            model->animation[i]->basicValueEdited[j] = 1;
         }
 
         model->animation[i]->lastUpdate = -1;
