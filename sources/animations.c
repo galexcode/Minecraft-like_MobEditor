@@ -270,18 +270,28 @@ int editAnimations(Model *model, char *mainPath, char *pathModel, Texture *textu
             }
             if(fileButton[2].selected == 1 && event.mouse[SDL_BUTTON_LEFT] == 1)
             {
-                if(openBrowser(buff.string, MODELS))
+                if(editingAnimation == 0)
                 {
-                    sprintf(pathModel, buff.string);
-                    if(saveModel(buff.string, model))
+                    animationPlaying[0] = 0;
+                    resetModelAnimation(model, currentEditionAnimation);
+
+                    if(openBrowser(buff.string, MODELS))
                     {
-                        model->saved = 1;
-                        addStringToText(&textAdvice, "Model saved");
+                        sprintf(pathModel, buff.string);
+                        if(saveModel(buff.string, model))
+                        {
+                            model->saved = 1;
+                            addStringToText(&textAdvice, "Model saved");
+                        }
+                    }
+                    else
+                    {
+                        addStringToText(&textAdvice, "Model not saved");
                     }
                 }
                 else
                 {
-                    addStringToText(&textAdvice, "Model not saved, path invalid");
+                    addStringToText(&textAdvice, "You cannot save a model while editing animation");
                 }
 
                 event.mouse[SDL_BUTTON_LEFT] = 0;
@@ -299,7 +309,7 @@ int editAnimations(Model *model, char *mainPath, char *pathModel, Texture *textu
         {
             if(editionButton[0].selected == 1 && event.mouse[SDL_BUTTON_LEFT] == 1)
             {
-                addAnimation(model, "New Animation");
+                addAnimation(model, "NewAnimation");
                 addStringToText(&textAdvice, "Animation created, rename it with a right-clic");
 
                 free(animationButton);
@@ -658,15 +668,11 @@ int editAnimations(Model *model, char *mainPath, char *pathModel, Texture *textu
 
         if(event.mouse[SDL_BUTTON_WHEELDOWN] == 1)
         {
-            (*zoomModel) += 0.05;
-            if((*zoomModel) > 10)
-                (*zoomModel) = 10;
+            (*zoomModel) += (*zoomModel) * 0.03;
         }
         if(event.mouse[SDL_BUTTON_WHEELUP] == 1)
         {
-            (*zoomModel) -= 0.05;
-            if((*zoomModel) < 1)
-                (*zoomModel) = 1;
+            (*zoomModel) -= (*zoomModel) * 0.03;
         }
         if(event.mouse[SDL_BUTTON_MIDDLE] == 1)
         {
@@ -1177,93 +1183,30 @@ Point3D defineCubeOrigin(Model *model, int indexMemberAffected, int indexFaceAff
     return origin;
 }
 
-void fixCoordsModel(Model *model)
-{
-    int h, i, j;
-    Point3D cubeDimension;
-    Point3D origin;
-    Cube tmp;
-
-    origin.x = 0;
-    origin.y = 0;
-    origin.z = 0;
-
-    for(i = 0; i < model->nbMembers; i++)
-    {
-        tmp = (*model->member[i]);
-
-        cubeDimension.x = model->member[i]->face[0].point[0].x - model->member[i]->face[2].point[2].x;
-        cubeDimension.y = model->member[i]->face[0].point[0].y - model->member[i]->face[2].point[2].y;
-        cubeDimension.z = model->member[i]->face[0].point[0].z - model->member[i]->face[2].point[2].z;
-
-        if(cubeDimension.x < 0)
-            cubeDimension.x *= -1;
-        if(cubeDimension.y < 0)
-            cubeDimension.y *= -1;
-        if(cubeDimension.z < 0)
-            cubeDimension.z *= -1;
-
-        model->translation[i]->x = model->member[i]->face[0].point[0].x + model->translation[i]->x;
-        model->translation[i]->y = model->member[i]->face[0].point[0].y + model->translation[i]->y;
-        model->translation[i]->z = model->member[i]->face[0].point[0].z + model->translation[i]->z;
-
-        initCube(model->member[i], origin, cubeDimension);
-
-        for(j = 0; j < 6; j++)
-        {
-            model->member[i]->face[j].color.r = tmp.face[j].color.r;
-            model->member[i]->face[j].color.v = tmp.face[j].color.v;
-            model->member[i]->face[j].color.b = tmp.face[j].color.b;
-
-            for(h = 0; h < 4; h++)
-            {
-                model->member[i]->face[j].point[h].coordFileTexture.x = tmp.face[j].point[h].coordFileTexture.x;
-                model->member[i]->face[j].point[h].coordFileTexture.y = tmp.face[j].point[h].coordFileTexture.y;
-            }
-        }
-    }
-}
-
 void attribMemberOrigin(Model *model, Point3D origin, int indexMemberAffected)
 {
-    int h, i = indexMemberAffected, j;
-    Point3D cubeDimension, cubeZeroPoint;
-    Cube tmp;
+    int i = indexMemberAffected;
 
-    tmp = (*model->member[i]);
+    model->member[i]->dimension.x = model->member[i]->face[0].point[0].x - model->member[i]->face[2].point[2].x;
+    model->member[i]->dimension.y = model->member[i]->face[0].point[0].y - model->member[i]->face[2].point[2].y;
+    model->member[i]->dimension.z = model->member[i]->face[0].point[0].z - model->member[i]->face[2].point[2].z;
 
-    cubeDimension.x = model->member[i]->face[0].point[0].x - model->member[i]->face[2].point[2].x;
-    cubeDimension.y = model->member[i]->face[0].point[0].y - model->member[i]->face[2].point[2].y;
-    cubeDimension.z = model->member[i]->face[0].point[0].z - model->member[i]->face[2].point[2].z;
+    if(model->member[i]->dimension.x < 0)
+        model->member[i]->dimension.x *= -1;
+    if(model->member[i]->dimension.y < 0)
+        model->member[i]->dimension.y *= -1;
+    if(model->member[i]->dimension.z < 0)
+        model->member[i]->dimension.z *= -1;
 
-    if(cubeDimension.x < 0)
-        cubeDimension.x *= -1;
-    if(cubeDimension.y < 0)
-        cubeDimension.y *= -1;
-    if(cubeDimension.z < 0)
-        cubeDimension.z *= -1;
+    model->member[i]->origin.x = model->translation[i]->x + model->member[i]->face[0].point[0].x - origin.x;
+    model->member[i]->origin.y = model->translation[i]->y + model->member[i]->face[0].point[0].y - origin.y;
+    model->member[i]->origin.z = model->translation[i]->z + model->member[i]->face[0].point[0].z - origin.z;
 
-    cubeZeroPoint.x = model->translation[i]->x + model->member[i]->face[0].point[0].x - origin.x;
-    cubeZeroPoint.y = model->translation[i]->y + model->member[i]->face[0].point[0].y - origin.y;
-    cubeZeroPoint.z = model->translation[i]->z + model->member[i]->face[0].point[0].z - origin.z;
+    model->translation[i]->x += model->member[i]->face[0].point[0].x - model->member[i]->origin.x;
+    model->translation[i]->y += model->member[i]->face[0].point[0].y - model->member[i]->origin.y;
+    model->translation[i]->z += model->member[i]->face[0].point[0].z - model->member[i]->origin.z;
 
-    model->translation[i]->x += model->member[i]->face[0].point[0].x - cubeZeroPoint.x;
-    model->translation[i]->y += model->member[i]->face[0].point[0].y - cubeZeroPoint.y;
-    model->translation[i]->z += model->member[i]->face[0].point[0].z - cubeZeroPoint.z;
-
-    initCube(model->member[i], cubeZeroPoint, cubeDimension);
-
-    for(j = 0; j < 6; j++)
-    {
-        model->member[i]->face[j].color.r = tmp.face[j].color.r;
-        model->member[i]->face[j].color.v = tmp.face[j].color.v;
-        model->member[i]->face[j].color.b = tmp.face[j].color.b;
-        for(h = 0; h < 4; h++)
-        {
-            model->member[i]->face[j].point[h].coordFileTexture.x = tmp.face[j].point[h].coordFileTexture.x;
-            model->member[i]->face[j].point[h].coordFileTexture.y = tmp.face[j].point[h].coordFileTexture.y;
-        }
-    }
+    initCube(model->member[i], 0);
 }
 
 void getBasicValue(Model *model, int indexMemberSelected, int indexCurrentAnimation, int typeAnimation, int axisAnimated)

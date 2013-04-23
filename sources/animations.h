@@ -8,7 +8,6 @@
     float editMemberAnimation(Model *model, char *animationName, int typeAnimation, int indexMemberAffected, int indexFaceAffected, int *indexMovement);
     void collisionCursorModelAnimator(int *indexFaceAffected, int *indexAreaSelected);
     Point3D defineCubeOrigin(Model *model, int indexMemberAffected, int indexFaceAffected, int indexAreaSelected);
-    void fixCoordsModel(Model *model);
     void attribMemberOrigin(Model *model, Point3D origin, int indexMemberAffected);
     void getBasicValue(Model *model, int indexMemberSelected, int indexCurrentAnimation, int typeAnimation, int axisAnimated);
     int affectAnimationValue(Model *model, int indexAnimation, int indexMovement, int indexMemberAffected, int period);

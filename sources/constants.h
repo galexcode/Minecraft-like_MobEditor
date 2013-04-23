@@ -58,7 +58,7 @@
     typedef struct Point2D Point2D;
     struct Point2D
     {
-        double x, y;
+        float x, y;
     };
 
     typedef struct Point3D Point3D;
@@ -97,6 +97,8 @@
     struct Cube
     {
         Face face[6];
+        Point3D origin;
+        Point3D dimension;
         GLuint IDVBO;
     };
 

@@ -3,7 +3,6 @@
 
     int editor(char *mainPath, char *pathModel);
     int addCube(Model *model);
-    int initCube(Cube *cube, Point3D origin, Point3D dimension);
     void moveCamera(Point3D *pos, double angleX, double angleY, double *zoom);
     void collisionCursorModelEditor(int *indexMemberAffected, int *indexFaceAffected);
     double editCube(Model *model, int modeModelisation, int indexMemberAffected, int indexFaceAffected, int selected);

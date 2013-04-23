@@ -18,6 +18,78 @@ int initModel(Model *model)
     return 1;
 }
 
+int initCube(Cube *cube, int initEverything)
+{
+    int i, j;
+
+    for(i = 0; i < 6; i++)
+    {
+        if(initEverything)
+        {
+            cube->face[i].color.r = i * 20 + 50;
+            cube->face[i].color.v = i * 20 + 50;
+            cube->face[i].color.b = i * 20 + 50;
+        }
+
+        for(j = 0; j < 4; j++)
+        {
+            cube->face[i].point[j].x = cube->origin.x;
+            cube->face[i].point[j].y = cube->origin.y;
+            cube->face[i].point[j].z = cube->origin.z;
+
+            if(initEverything)
+            {
+                cube->face[i].point[j].coordFileTexture.x = -1;
+                cube->face[i].point[j].coordFileTexture.y = -1;
+            }
+        }
+    }
+
+    cube->face[0].point[1].y += cube->dimension.y;
+    cube->face[0].point[2].x += cube->dimension.x;
+    cube->face[0].point[2].y += cube->dimension.y;
+    cube->face[0].point[3].x += cube->dimension.x;
+
+    cube->face[1].point[1].y += cube->dimension.y;
+    cube->face[1].point[2].y += cube->dimension.y;
+    cube->face[1].point[2].z += cube->dimension.z;
+    cube->face[1].point[3].z += cube->dimension.z;
+
+    cube->face[2].point[0].z += cube->dimension.z;
+    cube->face[2].point[1].x += cube->dimension.x;
+    cube->face[2].point[1].z += cube->dimension.z;
+    cube->face[2].point[2].x += cube->dimension.x;
+    cube->face[2].point[2].y += cube->dimension.y;
+    cube->face[2].point[2].z += cube->dimension.z;
+    cube->face[2].point[3].y += cube->dimension.y;
+    cube->face[2].point[3].z += cube->dimension.z;
+
+    cube->face[3].point[0].x += cube->dimension.x;
+    cube->face[3].point[1].x += cube->dimension.x;
+    cube->face[3].point[1].y += cube->dimension.y;
+    cube->face[3].point[2].x += cube->dimension.x;
+    cube->face[3].point[2].y += cube->dimension.y;
+    cube->face[3].point[2].z += cube->dimension.z;
+    cube->face[3].point[3].x += cube->dimension.x;
+    cube->face[3].point[3].z += cube->dimension.z;
+
+    cube->face[4].point[1].x += cube->dimension.x;
+    cube->face[4].point[2].x += cube->dimension.x;
+    cube->face[4].point[2].z += cube->dimension.z;
+    cube->face[4].point[3].z += cube->dimension.z;
+
+    cube->face[5].point[0].y += cube->dimension.y;
+    cube->face[5].point[1].x += cube->dimension.x;
+    cube->face[5].point[1].y += cube->dimension.y;
+    cube->face[5].point[2].x += cube->dimension.x;
+    cube->face[5].point[2].y += cube->dimension.y;
+    cube->face[5].point[2].z += cube->dimension.z;
+    cube->face[5].point[3].z += cube->dimension.z;
+    cube->face[5].point[3].y += cube->dimension.y;
+
+    return 1;
+}
+
 int createModel(char *mainPath, char *path, Model *model)
 {
     FILE *file = NULL;
@@ -89,20 +161,28 @@ int loadModel(char *mainPath, char *path, Model *model)
             fscanf(file, "Member %d\n", &i);
             fscanf(file, "Translation : %f %f %f\n", &model->translation[i]->x, &model->translation[i]->y, &model->translation[i]->z);
             fscanf(file, "Rotation : %f %f %f\n", &model->rotation[i]->x, &model->rotation[i]->y, &model->rotation[i]->z);
+            fscanf(file, "o %f %f %f\n", &model->member[i]->origin.x, &model->member[i]->origin.y, &model->member[i]->origin.z);
+            fscanf(file, "d %f %f %f\n\n", &model->member[i]->dimension.x, &model->member[i]->dimension.y, &model->member[i]->dimension.z);
+
+            initCube(model->member[i], 1);
+
             for(j = 0; j < 6; j++)
             {
                 fscanf(file, "face %d :\n", &j);
                 fscanf(file, "c %lf %lf %lf\n\n", &model->member[i]->face[j].color.r, &model->member[i]->face[j].color.v, &model->member[i]->face[j].color.b);
                 for(k = 0; k < 4; k++)
                 {
-                    fscanf(file, "v %f, %f, %f\n", &model->member[i]->face[j].point[k].x, &model->member[i]->face[j].point[k].y, &model->member[i]->face[j].point[k].z);
-                    fscanf(file, "t %lf %lf\n\n", &model->member[i]->face[j].point[k].coordFileTexture.x, &model->member[i]->face[j].point[k].coordFileTexture.y);
+                    fscanf(file, "t %f %f\n", &model->member[i]->face[j].point[k].coordFileTexture.x, &model->member[i]->face[j].point[k].coordFileTexture.y);
                 }
+
+                fscanf(file, "\n");
             }
         }
     }
 
     fscanf(file, "nbAnims = %d\n\n", &model->nbAnims);
+
+    printf("%d\n", model->nbAnims);
 
     if(model->nbAnims > 0)
     {
@@ -183,15 +263,18 @@ int saveModel(char *path, Model *model)
         fprintf(file, "Member %d\n", i);
         fprintf(file, "Translation : %f %f %f\n", model->translation[i]->x, model->translation[i]->y, model->translation[i]->z);
         fprintf(file, "Rotation : %f %f %f\n", model->rotation[i]->x, model->rotation[i]->y, model->rotation[i]->z);
+        fprintf(file, "o %f %f %f\n", model->member[i]->origin.x, model->member[i]->origin.y, model->member[i]->origin.z);
+        fprintf(file, "d %f %f %f\n\n", model->member[i]->dimension.x, model->member[i]->dimension.y, model->member[i]->dimension.z);
+
         for(j = 0; j < 6; j++)
         {
             fprintf(file, "face %d :\n", j);
             fprintf(file, "c %lf %lf %lf\n\n", model->member[i]->face[j].color.r, model->member[i]->face[j].color.v, model->member[i]->face[j].color.b);
             for(k = 0; k < 4; k++)
             {
-                fprintf(file, "v %f, %f, %f\n", model->member[i]->face[j].point[k].x, model->member[i]->face[j].point[k].y, model->member[i]->face[j].point[k].z);
-                fprintf(file, "t %lf %lf\n\n", model->member[i]->face[j].point[k].coordFileTexture.x, model->member[i]->face[j].point[k].coordFileTexture.y);
+                fprintf(file, "t %lf %lf\n", model->member[i]->face[j].point[k].coordFileTexture.x, model->member[i]->face[j].point[k].coordFileTexture.y);
             }
+            fprintf(file, "\n");
         }
     }
 

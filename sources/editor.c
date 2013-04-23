@@ -222,15 +222,11 @@ int editor(char *mainPath, char *pathModel)
         }
         if(event.mouse[SDL_BUTTON_WHEELDOWN] == 1 && stateEvent == EVENT_FOR_EDITOR && event.posX < textureEditor.pos.x)
         {
-            zoomModel += 0.05;
-            if(zoomModel > 10)
-                zoomModel = 10;
+            zoomModel += zoomModel * 0.03;
         }
         if(event.mouse[SDL_BUTTON_WHEELUP] == 1 && stateEvent == EVENT_FOR_EDITOR && event.posX < textureEditor.pos.x)
         {
-            zoomModel -= 0.05;
-            if(zoomModel < 1)
-                zoomModel = 1;
+            zoomModel -= zoomModel * 0.03;
         }
         if(oldDimensionResized != dimensionResized && event.mouse[SDL_BUTTON_RIGHT] == 1)
         {
@@ -670,16 +666,6 @@ int editor(char *mainPath, char *pathModel)
 
 int addCube(Model *model)
 {
-    Point3D origin, cubeDimension;
-
-    origin.x = 0;
-    origin.y = 0;
-    origin.z = 0;
-
-    cubeDimension.x = 1;
-    cubeDimension.y = 1;
-    cubeDimension.z = 1;
-
     if(model->nbMembers < MEMBERS_MAX)
     {
         model->member[model->nbMembers] = malloc(sizeof(Cube));
@@ -690,7 +676,16 @@ int addCube(Model *model)
             printf("Error allocating memory\n");
         }
         model->nbMembers++;
-        initCube(model->member[model->nbMembers - 1], origin, cubeDimension);
+
+        model->member[model->nbMembers - 1]->origin.x = 0;
+        model->member[model->nbMembers - 1]->origin.y = 0;
+        model->member[model->nbMembers - 1]->origin.z = 0;
+
+        model->member[model->nbMembers - 1]->dimension.x = 1;
+        model->member[model->nbMembers - 1]->dimension.y = 1;
+        model->member[model->nbMembers - 1]->dimension.z = 1;
+
+        initCube(model->member[model->nbMembers - 1], 1);
         model->translation[model->nbMembers - 1]->x = 0;
         model->translation[model->nbMembers - 1]->y = 0;
         model->translation[model->nbMembers - 1]->z = 0;
@@ -718,72 +713,6 @@ int removeCube(Model *model, int *indexMemberAffected)
     }
 
     model->nbMembers--;
-
-    return 1;
-}
-
-int initCube(Cube *cube, Point3D origin, Point3D dimension)
-{
-    int i, j;
-
-    for(i = 0; i < 6; i++)
-    {
-        cube->face[i].color.r = i * 20 + 50;
-        cube->face[i].color.v = i * 20 + 50;
-        cube->face[i].color.b = i * 20 + 50;
-
-        for(j = 0; j < 4; j++)
-        {
-            cube->face[i].point[j].x = origin.x;
-            cube->face[i].point[j].y = origin.y;
-            cube->face[i].point[j].z = origin.z;
-
-            cube->face[i].point[j].coordFileTexture.x = -1;
-            cube->face[i].point[j].coordFileTexture.y = -1;
-        }
-    }
-
-    cube->face[0].point[1].y += dimension.y;
-    cube->face[0].point[2].x += dimension.x;
-    cube->face[0].point[2].y += dimension.y;
-    cube->face[0].point[3].x += dimension.x;
-
-    cube->face[1].point[1].y += dimension.y;
-    cube->face[1].point[2].y += dimension.y;
-    cube->face[1].point[2].z += dimension.z;
-    cube->face[1].point[3].z += dimension.z;
-
-    cube->face[2].point[0].z += dimension.z;
-    cube->face[2].point[1].x += dimension.x;
-    cube->face[2].point[1].z += dimension.z;
-    cube->face[2].point[2].x += dimension.x;
-    cube->face[2].point[2].y += dimension.y;
-    cube->face[2].point[2].z += dimension.z;
-    cube->face[2].point[3].y += dimension.y;
-    cube->face[2].point[3].z += dimension.z;
-
-    cube->face[3].point[0].x += dimension.x;
-    cube->face[3].point[1].x += dimension.x;
-    cube->face[3].point[1].y += dimension.y;
-    cube->face[3].point[2].x += dimension.x;
-    cube->face[3].point[2].y += dimension.y;
-    cube->face[3].point[2].z += dimension.z;
-    cube->face[3].point[3].x += dimension.x;
-    cube->face[3].point[3].z += dimension.z;
-
-    cube->face[4].point[1].x += dimension.x;
-    cube->face[4].point[2].x += dimension.x;
-    cube->face[4].point[2].z += dimension.z;
-    cube->face[4].point[3].z += dimension.z;
-
-    cube->face[5].point[0].y += dimension.y;
-    cube->face[5].point[1].x += dimension.x;
-    cube->face[5].point[1].y += dimension.y;
-    cube->face[5].point[2].x += dimension.x;
-    cube->face[5].point[2].y += dimension.y;
-    cube->face[5].point[2].z += dimension.z;
-    cube->face[5].point[3].z += dimension.z;
-    cube->face[5].point[3].y += dimension.y;
 
     return 1;
 }
@@ -818,6 +747,7 @@ double editCube(Model *model, int modeModelisation, int indexMemberAffected, int
     int coordEdited = -1;
     int i, j, k;
     double dimensionEdited = 0;
+
     Point3D tmp;
 
     if(model->member[indexMemberAffected]->face[indexFaceAffected].point[0].x == model->member[indexMemberAffected]->face[indexFaceAffected].point[2].x)
@@ -956,6 +886,10 @@ double editCube(Model *model, int modeModelisation, int indexMemberAffected, int
             }
             break;
     }
+
+    model->member[indexMemberAffected]->dimension.x = model->member[indexMemberAffected]->face[2].point[2].x - model->member[indexMemberAffected]->face[0].point[0].x;
+    model->member[indexMemberAffected]->dimension.y = model->member[indexMemberAffected]->face[2].point[2].y - model->member[indexMemberAffected]->face[0].point[0].y;
+    model->member[indexMemberAffected]->dimension.z = model->member[indexMemberAffected]->face[2].point[2].z - model->member[indexMemberAffected]->face[0].point[0].z;
 
     return dimensionEdited;
 }
