@@ -36,6 +36,7 @@ int editAnimations(Model *model, char *mainPath, char *pathModel, Texture *textu
     int indexMemberSelected = -1;
     int indexMovement = -1, indexLastMovement = -1;
     int definingOrigin = 0;
+    int definingParent = 0;
 
     int period = 500;
     int getPeriod = 0;
@@ -594,31 +595,64 @@ int editAnimations(Model *model, char *mainPath, char *pathModel, Texture *textu
                 }
                 event.mouse[SDL_BUTTON_LEFT] = 0;
             }
-        }
 
-        if(toolButton[3].selected == 1 && event.mouse[SDL_BUTTON_LEFT] == 1)
-        {
-            if(getPeriod == 0)
+            if(toolButton[3].selected == 1 && event.mouse[SDL_BUTTON_LEFT] == 1)
             {
-                getPeriod = 1;
-                addStringToText(&textAdvice, "Use arrows to define period to apply");
-            }
-            else
-            {
-                getPeriod = 0;
-                if(indexLastMovement != -1)
+                if(getPeriod == 0)
                 {
-                    model->animation[indexCurrentAnimation]->period[indexLastMovement] = period;
-                    addStringToText(&textAdvice, "Period defined");
+                    getPeriod = 1;
+                    addStringToText(&textAdvice, "Use arrows to define period to apply");
                 }
-
                 else
                 {
-                    addStringToText(&textAdvice, "Period defined for the next movement");
+                    getPeriod = 0;
+                    if(indexLastMovement != -1)
+                    {
+                        model->animation[indexCurrentAnimation]->period[indexLastMovement] = period;
+                        addStringToText(&textAdvice, "Period defined");
+                    }
+
+                    else
+                    {
+                        addStringToText(&textAdvice, "Period defined for the next movement");
+                    }
                 }
+
+                event.mouse[SDL_BUTTON_LEFT] = 0;
             }
 
-            event.mouse[SDL_BUTTON_LEFT] = 0;
+            if(toolButton[4].selected == 1 && event.mouse[SDL_BUTTON_LEFT] == 1)
+            {
+                if(indexMemberSelected != -1)
+                {
+                    if(!editingAnimation && !definingOrigin)
+                    {
+                        if(definingParent == 1)
+                        {
+                            definingParent = 0;
+                            addStringToText(&toolButton[4].text, "Define A Parent");
+                            toolButton[4].weight = getWeightString(toolButton[4].text, weightLetter) + 10;
+                            addStringToText(&textAdvice, "");
+                        }
+                        else
+                        {
+                            definingParent = 1;
+                            addStringToText(&toolButton[4].text, "Defining ...");
+                            toolButton[4].weight = getWeightString(toolButton[4].text, weightLetter) + 10;
+                            addStringToText(&textAdvice, "Select the parent");
+                        }
+                    }
+                    else
+                    {
+                        addStringToText(&textAdvice, "Cannot define a parent while editing something else");
+                    }
+                    event.mouse[SDL_BUTTON_LEFT] = 0;
+                }
+                else
+                {
+                    addStringToText(&textAdvice, "Select a cube before defining a parent");
+                }
+            }
         }
 
         if(getPeriod == 1)
@@ -721,6 +755,24 @@ int editAnimations(Model *model, char *mainPath, char *pathModel, Texture *textu
             addStringToText(&textAdvice, "Origin defined");
         }
 
+        if((event.mouse[SDL_BUTTON_RIGHT] == 1 || event.mouse[SDL_BUTTON_LEFT] == 1) && definingParent && indexMemberAffected != -1 && stateSelection == SELECTED)
+        {
+            if(indexMemberAffected != indexMemberSelected)
+            {
+                addParent(model, indexMemberAffected, indexMemberSelected);
+                addStringToText(&textAdvice, "Parent defined");
+                definingParent = 0;
+                addStringToText(&toolButton[4].text, "Define A Parent");
+                toolButton[4].weight = getWeightString(toolButton[4].text, weightLetter) + 10;
+                event.mouse[SDL_BUTTON_RIGHT] = 0;
+                event.mouse[SDL_BUTTON_LEFT] = 0;
+            }
+            else
+            {
+                addStringToText(&textAdvice, "Parent may be different as the child");
+            }
+        }
+
         if((event.mouse[SDL_BUTTON_RIGHT] == 1 || event.mouse[SDL_BUTTON_LEFT] == 1) && indexFaceAffected != -1 && indexMemberAffected != -1 && stateSelection == SELECTING)
         {
             indexMemberSelected = indexMemberAffected;
@@ -775,7 +827,7 @@ int editAnimations(Model *model, char *mainPath, char *pathModel, Texture *textu
             clearScene();
             modeRender(RENDER_3D, &pos, &target, FOV);
 
-            if(stateSelection != SELECTED)
+            if(stateSelection != SELECTED || definingParent == 1)
             {
                 renderModel(model, RENDER_MODE);
             }
@@ -1187,16 +1239,9 @@ void attribMemberOrigin(Model *model, Point3D origin, int indexMemberAffected)
 {
     int i = indexMemberAffected;
 
-    model->member[i]->dimension.x = model->member[i]->face[0].point[0].x - model->member[i]->face[2].point[2].x;
-    model->member[i]->dimension.y = model->member[i]->face[0].point[0].y - model->member[i]->face[2].point[2].y;
-    model->member[i]->dimension.z = model->member[i]->face[0].point[0].z - model->member[i]->face[2].point[2].z;
-
-    if(model->member[i]->dimension.x < 0)
-        model->member[i]->dimension.x *= -1;
-    if(model->member[i]->dimension.y < 0)
-        model->member[i]->dimension.y *= -1;
-    if(model->member[i]->dimension.z < 0)
-        model->member[i]->dimension.z *= -1;
+    model->member[i]->dimension.x = model->member[i]->face[2].point[2].x - model->member[i]->face[0].point[0].x;
+    model->member[i]->dimension.y = model->member[i]->face[2].point[2].y - model->member[i]->face[0].point[0].y;
+    model->member[i]->dimension.z = model->member[i]->face[2].point[2].z - model->member[i]->face[0].point[0].z;
 
     model->member[i]->origin.x = model->translation[i]->x + model->member[i]->face[0].point[0].x - origin.x;
     model->member[i]->origin.y = model->translation[i]->y + model->member[i]->face[0].point[0].y - origin.y;
@@ -1400,4 +1445,39 @@ void resetTransformationMember(Model *model, int indexCurrentAnimation, int inde
 
         model->animation[indexCurrentAnimation]->nbMovements--;
     }
+}
+
+void addParent(Model *model, int indexParent, int indexChild)
+{
+    model->member[indexChild]->indexParent = indexParent;
+
+    model->member[indexChild]->realOrigin.x = model->member[indexChild]->face[0].point[0].x - model->member[indexChild]->origin.x + model->translation[indexChild]->x;
+    model->member[indexChild]->realOrigin.y = model->member[indexChild]->face[0].point[0].y - model->member[indexChild]->origin.y + model->translation[indexChild]->y;
+    model->member[indexChild]->realOrigin.z = model->member[indexChild]->face[0].point[0].z - model->member[indexChild]->origin.z + model->translation[indexChild]->z;
+
+    model->member[indexParent]->realOrigin.x = model->member[indexParent]->face[0].point[0].x - model->member[indexParent]->origin.x + model->translation[indexParent]->x;
+    model->member[indexParent]->realOrigin.y = model->member[indexParent]->face[0].point[0].y - model->member[indexParent]->origin.y + model->translation[indexParent]->y;
+    model->member[indexParent]->realOrigin.z = model->member[indexParent]->face[0].point[0].z - model->member[indexParent]->origin.z + model->translation[indexParent]->z;
+
+
+    model->member[indexChild]->distanceParent.x = sqrt(pow(model->member[indexChild]->realOrigin.y - model->member[indexParent]->realOrigin.y, 2)
+                                                    + pow(model->member[indexChild]->realOrigin.z - model->member[indexParent]->realOrigin.z, 2));
+
+    model->member[indexChild]->distanceParent.z = sqrt(pow(model->member[indexChild]->realOrigin.x - model->member[indexParent]->realOrigin.x, 2)
+                                                    + pow(model->member[indexChild]->realOrigin.y - model->member[indexParent]->realOrigin.y, 2));
+
+    model->member[indexChild]->distanceParent.y = sqrt(pow(model->member[indexChild]->realOrigin.x - model->member[indexParent]->realOrigin.x, 2)
+                                                    + pow(model->member[indexChild]->realOrigin.z - model->member[indexParent]->realOrigin.z, 2));
+
+
+    model->member[indexChild]->angleParent.x = acosf((model->member[indexChild]->realOrigin.y - model->member[indexParent]->realOrigin.y)
+                                                    / model->member[indexChild]->distanceParent.x);
+
+    model->member[indexChild]->angleParent.z = acosf((model->member[indexChild]->realOrigin.x - model->member[indexParent]->realOrigin.x)
+                                                    / model->member[indexChild]->distanceParent.z);
+
+    model->member[indexChild]->angleParent.y = acosf((model->member[indexChild]->realOrigin.z - model->member[indexParent]->realOrigin.z)
+                                                    / model->member[indexChild]->distanceParent.y);
+
+    printf("di : %f %f %f\n", model->member[indexChild]->distanceParent.y, model->member[indexChild]->distanceParent.x, model->member[indexChild]->distanceParent.z);
 }

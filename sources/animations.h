@@ -14,5 +14,6 @@
     int searchMovement(Model *model, int indexAnimation, int indexMemberAffected, int axisAnimated, int typeAnimation);
     int getFreeMovement(Model *model, int indexAnimation);
     void resetTransformationMember(Model *model, int indexCurrentAnimation, int indexMovement);
+    void addParent(Model *model, int indexParent, int indexChild);
 
 #endif

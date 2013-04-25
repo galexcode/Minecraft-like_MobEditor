@@ -449,6 +449,7 @@ void attribToolButtonsAnimator(Button *button, Texture *texButton)
     addStringToText(&button[1].text, "Affect A Value");
     addStringToText(&button[2].text, "Start Editing Movement");
     addStringToText(&button[3].text, "Period : 500 ms");
+    addStringToText(&button[4].text, "Define A Parent");
 
     for(i = 0; i < NUMBER_TOOL_BUTTONS_ANIMATOR; i++)
     {
@@ -467,6 +468,9 @@ void attribToolButtonsAnimator(Button *button, Texture *texButton)
 
     button[3].pos.x = button[0].pos.x;
     button[3].pos.y = button[2].pos.y + button[2].height + 5;
+
+    button[4].pos.x = button[0].pos.x;
+    button[4].pos.y = button[3].pos.y + button[3].height + 5;
 }
 
 int attribAnimationButtonsAnimatorWithModelsAnimation(Model *model, Button *button, Texture *texButton)

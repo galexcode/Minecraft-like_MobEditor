@@ -29,6 +29,8 @@ int initCube(Cube *cube, int initEverything)
             cube->face[i].color.r = i * 20 + 50;
             cube->face[i].color.v = i * 20 + 50;
             cube->face[i].color.b = i * 20 + 50;
+
+            cube->indexParent = -1;
         }
 
         for(j = 0; j < 4; j++)
@@ -159,6 +161,7 @@ int loadModel(char *mainPath, char *path, Model *model)
         for(i = 0; i < model->nbMembers; i++)
         {
             fscanf(file, "Member %d\n", &i);
+            fscanf(file, "Index Parent : %d\n", &model->member[i]->indexParent);
             fscanf(file, "Translation : %f %f %f\n", &model->translation[i]->x, &model->translation[i]->y, &model->translation[i]->z);
             fscanf(file, "Rotation : %f %f %f\n", &model->rotation[i]->x, &model->rotation[i]->y, &model->rotation[i]->z);
             fscanf(file, "o %f %f %f\n", &model->member[i]->origin.x, &model->member[i]->origin.y, &model->member[i]->origin.z);
@@ -181,8 +184,6 @@ int loadModel(char *mainPath, char *path, Model *model)
     }
 
     fscanf(file, "nbAnims = %d\n\n", &model->nbAnims);
-
-    printf("%d\n", model->nbAnims);
 
     if(model->nbAnims > 0)
     {
@@ -261,6 +262,7 @@ int saveModel(char *path, Model *model)
     for(i = 0; i < model->nbMembers; i++)
     {
         fprintf(file, "Member %d\n", i);
+        fprintf(file, "Index Parent : %d\n", model->member[i]->indexParent);
         fprintf(file, "Translation : %f %f %f\n", model->translation[i]->x, model->translation[i]->y, model->translation[i]->z);
         fprintf(file, "Rotation : %f %f %f\n", model->rotation[i]->x, model->rotation[i]->y, model->rotation[i]->z);
         fprintf(file, "o %f %f %f\n", model->member[i]->origin.x, model->member[i]->origin.y, model->member[i]->origin.z);
@@ -655,6 +657,7 @@ int animateModel(Model *model, char *nameAnimation)
     int dataReturned = 2;
     int actualTime = SDL_GetTicks();
     float *dataToAnimate = NULL;
+    float dataNotAnimated = 0;
 
     indexAnimation = searchAnimation(model, nameAnimation);
 
@@ -701,6 +704,7 @@ int animateModel(Model *model, char *nameAnimation)
                     break;
             }
         }
+        dataNotAnimated = (*dataToAnimate);
 
         if(model->animation[indexAnimation]->currentPhase[i] == INCREASING)
         {
@@ -779,6 +783,8 @@ int animateModel(Model *model, char *nameAnimation)
                 }
             }
         }
+
+        animateChildren(model, indexAnimation, i, (*dataToAnimate), dataNotAnimated);
     }
 
     model->animation[indexAnimation]->lastUpdate = SDL_GetTicks();
@@ -888,4 +894,116 @@ int resetModelAnimation(Model *model, char *animationName)
     }
 
     return 1;
+}
+
+void calculateChildData(Model *model)
+{
+    int i;
+    int indexChild, indexParent;
+
+    for(i = 0; i < model->nbMembers; i++)
+    {
+        indexParent = model->member[i]->indexParent;
+
+        if(indexParent != -1)
+        {
+            indexChild = i;
+
+            model->member[indexChild]->realOrigin.x = model->member[indexChild]->face[0].point[0].x - model->member[indexChild]->origin.x + model->translation[indexChild]->x;
+            model->member[indexChild]->realOrigin.y = model->member[indexChild]->face[0].point[0].y - model->member[indexChild]->origin.y + model->translation[indexChild]->y;
+            model->member[indexChild]->realOrigin.z = model->member[indexChild]->face[0].point[0].z - model->member[indexChild]->origin.z + model->translation[indexChild]->z;
+
+            model->member[indexParent]->realOrigin.x = model->member[indexParent]->face[0].point[0].x - model->member[indexParent]->origin.x + model->translation[indexParent]->x;
+            model->member[indexParent]->realOrigin.y = model->member[indexParent]->face[0].point[0].y - model->member[indexParent]->origin.y + model->translation[indexParent]->y;
+            model->member[indexParent]->realOrigin.z = model->member[indexParent]->face[0].point[0].z - model->member[indexParent]->origin.z + model->translation[indexParent]->z;
+
+
+            model->member[indexChild]->distanceParent.x = sqrt(pow(model->member[indexChild]->realOrigin.y - model->member[indexParent]->realOrigin.y, 2)
+                                                            + pow(model->member[indexChild]->realOrigin.z - model->member[indexParent]->realOrigin.z, 2));
+
+            model->member[indexChild]->distanceParent.z = sqrt(pow(model->member[indexChild]->realOrigin.x - model->member[indexParent]->realOrigin.x, 2)
+                                                            + pow(model->member[indexChild]->realOrigin.y - model->member[indexParent]->realOrigin.y, 2));
+
+            model->member[indexChild]->distanceParent.y = sqrt(pow(model->member[indexChild]->realOrigin.x - model->member[indexParent]->realOrigin.x, 2)
+                                                            + pow(model->member[indexChild]->realOrigin.z - model->member[indexParent]->realOrigin.z, 2));
+
+
+            model->member[indexChild]->angleParent.x = acosf((model->member[indexChild]->realOrigin.y - model->member[indexParent]->realOrigin.y)
+                                                            / model->member[indexChild]->distanceParent.x);
+
+            model->member[indexChild]->angleParent.z = acosf((model->member[indexChild]->realOrigin.x - model->member[indexParent]->realOrigin.x)
+                                                            / model->member[indexChild]->distanceParent.x);
+
+            model->member[indexChild]->angleParent.y = acosf((model->member[indexChild]->realOrigin.z - model->member[indexParent]->realOrigin.z)
+                                                            / model->member[indexChild]->distanceParent.x);
+        }
+    }
+}
+
+void animateChildren(Model *model, int indexAnimation, int indexMovement, float dataAnimated, float lastData)
+{
+    int i;
+    int indexParent = model->animation[indexAnimation]->indexMemberAffected[indexMovement];
+
+    for(i = 0; i < model->nbMembers; i++)
+    {
+        if(model->member[i]->indexParent == indexParent)
+        {
+            if(model->animation[indexAnimation]->typeAnimation[indexMovement] == TRANSLATION_ANIMATION)
+            {
+                switch(model->animation[indexAnimation]->axisAnimated[indexMovement])
+                {
+                    case X:
+                        model->translation[i]->x += dataAnimated - lastData;
+                        break;
+                    case Y:
+                        model->translation[i]->y += dataAnimated - lastData;
+                        break;
+                    case Z:
+                        model->translation[i]->z += dataAnimated - lastData;
+                        break;
+                }
+            }
+            else if(model->animation[indexAnimation]->typeAnimation[indexMovement] == ROTATION_ANIMATION)
+            {
+                switch(model->animation[indexAnimation]->axisAnimated[indexMovement])
+                {
+                    case X:
+                        if(model->member[i]->distanceParent.x != 0)
+                        {
+                            model->translation[i]->y = model->member[i]->distanceParent.x * cos(M_PI * dataAnimated / 180 + model->member[i]->angleParent.x)
+                                                        + model->member[indexParent]->realOrigin.y;
+                            model->translation[i]->z = model->member[i]->distanceParent.x * sin(M_PI * dataAnimated / 180 + model->member[i]->angleParent.x)
+                                                        + model->member[indexParent]->realOrigin.z;
+                        }
+
+                        model->rotation[i]->x += dataAnimated - lastData;
+
+                        break;
+                    case Y:
+                        if(model->member[i]->distanceParent.y != 0)
+                        {
+                            model->translation[i]->x = model->member[i]->distanceParent.y * sin(M_PI * dataAnimated / 180 + model->member[i]->angleParent.y)
+                                                        + model->member[indexParent]->realOrigin.x;
+                            model->translation[i]->z = model->member[i]->distanceParent.y * cos(M_PI * dataAnimated / 180 + model->member[i]->angleParent.y)
+                                                        + model->member[indexParent]->realOrigin.z;
+                        }
+
+                        model->rotation[i]->y += dataAnimated - lastData;
+                        break;
+                    case Z:
+                        if(model->member[i]->distanceParent.z != 0)
+                        {
+                            model->translation[i]->x = model->member[i]->distanceParent.z * sin(M_PI * dataAnimated / 180 + model->member[i]->angleParent.z)
+                                                        + model->member[indexParent]->realOrigin.x;
+                            model->translation[i]->y = model->member[i]->distanceParent.z * cos(M_PI * dataAnimated / 180 + model->member[i]->angleParent.z)
+                                                        + model->member[indexParent]->realOrigin.y;
+                        }
+
+                        model->rotation[i]->z += dataAnimated - lastData;
+                        break;
+                }
+            }
+        }
+    }
 }

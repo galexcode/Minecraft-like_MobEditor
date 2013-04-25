@@ -29,7 +29,7 @@
     #define NUMBER_FILE_BUTTONS_ANIMATOR 4
     #define NUMBER_ANIMATION_BUTTONS_ANIMATOR 1
     #define NUMBER_EDITION_BUTTONS_ANIMATOR 4
-    #define NUMBER_TOOL_BUTTONS_ANIMATOR 4
+    #define NUMBER_TOOL_BUTTONS_ANIMATOR 5
 
     #define SIZE_PATH_MAX 512
     #define PRECISION_COLLISION 9
@@ -98,7 +98,11 @@
     {
         Face face[6];
         Point3D origin;
+        Point3D realOrigin;
         Point3D dimension;
+        int indexParent;
+        Point3D distanceParent;
+        Point3D angleParent;//rad
         GLuint IDVBO;
     };
 
